@@ -1,0 +1,3143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>MTRX — ByteMatrix Developer Community</title>
+<meta name="description" content="ByteMatrix / MTRX — developer community recruitment and tools." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<style>
+  :root{
+    --void:#050507;--black:#09090b;--matte:#0e0e11;--charcoal:#141418;
+    --surface:#1a1a1f;--raise:#212128;
+    --line:rgba(255,255,255,.07);--line-strong:rgba(255,255,255,.14);
+    --text:#ececed;--muted:#8b8b94;--dim:#5a5a63;
+    --accent:#d8b384;--ok:#7bc69a;--err:#e08b8b;--warn:#e0c68b;
+    --ease:cubic-bezier(.22,.61,.36,1);--ease-out:cubic-bezier(.16,1,.3,1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:radial-gradient(120% 80% at 78% 6%, #131318 0%, transparent 55%),
+      radial-gradient(90% 70% at 10% 94%, #0f0f14 0%, transparent 58%),var(--void);
+    color:var(--text);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    font-size:15px;line-height:1.6;
+    -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+    overflow:hidden;overscroll-behavior:none;-webkit-tap-highlight-color:transparent;
+  }
+  ::selection{background:rgba(216,179,132,.28);color:#fff}
+  button,a{font:inherit;color:inherit}
+  button{background:none;border:0;cursor:pointer}
+  a{text-decoration:none}
+  #bg{position:fixed;inset:0;z-index:0;display:block;width:100%;height:100%}
+  .grain{
+    position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.035;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .grad{-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+  .g-down{background-image:linear-gradient(180deg,#ffffff 0%,#e2e2e6 38%,#9c9ca6 78%,#6c6c76 100%)}
+  .g-diag{background-image:linear-gradient(138deg,#ffffff 0%,#cfcfd6 44%,#5e5e69 100%)}
+  .g-accent{background-image:linear-gradient(140deg,#f7e6c8 0%,#d8b384 40%,#a6804c 100%)}
+
+  .nav{position:fixed;top:0;left:0;right:0;z-index:60;display:flex;align-items:center;justify-content:space-between;gap:14px;
+    padding:14px clamp(12px,4vw,40px);
+    background:linear-gradient(180deg, rgba(5,5,7,.95), rgba(5,5,7,.6) 58%, transparent);pointer-events:none}
+  .nav > *{pointer-events:auto}
+  .brand{display:flex;align-items:center;gap:10px;padding:6px 0;letter-spacing:-.01em;font-size:.9rem;flex-shrink:0}
+  .brand-mark{width:9px;height:9px;border-radius:2px;background:var(--accent);display:block;
+    box-shadow:0 0 16px rgba(216,179,132,.5);transition:transform .45s var(--ease-out)}
+  .brand:hover .brand-mark{transform:rotate(45deg) scale(1.1)}
+  .brand-name{background-image:linear-gradient(120deg,#ffffff 0%,#b4b4be 55%,#7a7a84 100%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .links{position:relative;display:flex;align-items:center;gap:2px;padding:4px;
+    border:1px solid var(--line);border-radius:999px;background:rgba(11,11,13,.72);
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);overflow-x:auto;scrollbar-width:none;max-width:100%}
+  .links::-webkit-scrollbar{display:none}
+  .links button{position:relative;z-index:2;padding:8px 14px;border-radius:999px;font-size:.8rem;color:var(--muted);
+    white-space:nowrap;transition:color .3s var(--ease)}
+  .links button:hover{color:var(--text)}
+  .links button.on{background-image:linear-gradient(120deg,#ffffff 0%,#d8d8de 60%,#a8a8b2 100%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .pill{position:absolute;top:0;left:0;z-index:1;pointer-events:none;border-radius:999px;background:rgba(255,255,255,.07);
+    border:1px solid rgba(255,255,255,.09);
+    transition:transform .55s var(--ease-out), width .55s var(--ease-out), height .35s var(--ease-out);opacity:0}
+  .pill.ready{opacity:1}
+  .nav-status{display:flex;align-items:center;gap:9px;flex-shrink:0;font-size:.68rem;letter-spacing:.13em;text-transform:uppercase}
+  .nav-status .lbl{background-image:linear-gradient(100deg,#6a6a74 0%,#c6c6ce 50%,#6a6a74 100%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .pulse{width:6px;height:6px;border-radius:50%;background:var(--accent);display:block;animation:pulse 2.8s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(216,179,132,.4)}70%{box-shadow:0 0 0 9px rgba(216,179,132,0)}100%{box-shadow:0 0 0 0 rgba(216,179,132,0)}}
+
+  .view{position:fixed;inset:0;z-index:10;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
+    opacity:0;visibility:hidden;transform:translate3d(0,26px,0);filter:blur(9px);
+    transition:opacity .45s var(--ease-out), transform .6s var(--ease-out), filter .45s var(--ease-out), visibility 0s linear .6s;
+    scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.12) transparent}
+  .view::-webkit-scrollbar{width:8px}
+  .view::-webkit-scrollbar-thumb{background:rgba(255,255,255,.09);border-radius:8px}
+  .view.active{opacity:1;visibility:visible;transform:none;filter:none;
+    transition:opacity .55s var(--ease-out) .05s, transform .75s var(--ease-out) .05s, filter .55s var(--ease-out) .05s, visibility 0s}
+  .view.leaving{opacity:0;visibility:hidden;transform:translate3d(0,-20px,0);filter:blur(9px);
+    transition:opacity .3s ease, transform .42s ease, filter .3s ease, visibility 0s linear .42s}
+  .inner{max-width:1240px;margin:0 auto;padding:clamp(100px,14vh,150px) clamp(18px,5vw,72px) clamp(70px,10vh,120px)}
+
+  .eyebrow{display:flex;align-items:center;gap:9px;font-size:.68rem;letter-spacing:.2em;text-transform:uppercase}
+  .eyebrow .etext{background-image:linear-gradient(100deg,#4e4e58 0%,#a8a8b2 50%,#4e4e58 100%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .eyebrow.warm .etext{background-image:linear-gradient(100deg,#8a6f47 0%,#e2c294 50%,#8a6f47 100%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .lede{color:var(--muted);font-size:clamp(.98rem,1.15vw,1.08rem);max-width:60ch;line-height:1.75}
+  h2.section-title{font-size:clamp(1.9rem,4.2vw,3rem);line-height:1.08;letter-spacing:-.035em;font-weight:500;max-width:22ch;margin-top:18px}
+  .section-head{margin-bottom:clamp(36px,5vh,60px)}
+  .section-head .rule{display:block;height:1px;width:100%;margin-top:28px;border:0;
+    background-image:linear-gradient(90deg,transparent,rgba(255,255,255,.2) 30%,rgba(216,179,132,.28) 50%,rgba(255,255,255,.2) 70%,transparent)}
+  .rise{opacity:0}
+  .view.active .rise{animation:rise .85s var(--ease-out) both;animation-delay:var(--d,0s)}
+  @keyframes rise{from{opacity:0;transform:translate3d(0,26px,0);filter:blur(10px)}to{opacity:1;transform:none;filter:blur(0)}}
+  .reveal{opacity:0;transform:translate3d(0,22px,0);transition:opacity .7s var(--ease-out),transform .8s var(--ease-out)}
+  .reveal.in{opacity:1;transform:none}
+
+  .btn{position:relative;display:inline-flex;align-items:center;gap:.5rem;padding:.75rem 1.2rem;border-radius:10px;
+    font-size:.85rem;font-weight:500;border:1px solid var(--line-strong);
+    transition:background .3s var(--ease), border-color .3s var(--ease), transform .25s var(--ease-out), color .3s var(--ease), opacity .3s;will-change:transform}
+  .btn:active:not(:disabled){transform:scale(.97)}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .btn-primary{background:var(--text);color:#08080a;border-color:transparent}
+  .btn-primary:hover:not(:disabled){background:#fff}
+  .btn-ghost{color:var(--text)}
+  .btn-ghost:hover:not(:disabled){border-color:rgba(255,255,255,.3);background:rgba(255,255,255,.035)}
+  .btn-accent{border-color:rgba(216,179,132,.4);background:rgba(216,179,132,.07);color:#e8d3b0}
+  .btn-accent:hover:not(:disabled){background:rgba(216,179,132,.12);border-color:rgba(216,179,132,.6)}
+  .btn-danger{border-color:rgba(224,139,139,.35);color:#efb1b1}
+  .btn-danger:hover:not(:disabled){background:rgba(224,139,139,.08);border-color:rgba(224,139,139,.55)}
+  .btn-success{border-color:rgba(123,198,154,.35);color:#a9dcc0}
+  .btn-success:hover:not(:disabled){background:rgba(123,198,154,.08)}
+  .btn-sm{padding:.5rem .9rem;font-size:.76rem;border-radius:8px}
+
+  .work-intro{margin-bottom:clamp(36px,5vh,56px);max-width:66ch}
+  .work-intro p + p{margin-top:16px}
+  .cat{border-top:1px solid var(--line);padding:clamp(20px,3vw,30px) 0;
+    display:grid;grid-template-columns:minmax(0,200px) minmax(0,1fr);gap:clamp(20px,4vw,52px);
+    transition:padding-left .5s var(--ease-out), background .4s var(--ease)}
+  .cat:hover{padding-left:12px;background:linear-gradient(90deg,rgba(255,255,255,.022),transparent 60%)}
+  .cat:last-child{border-bottom:1px solid var(--line)}
+  .cat-num{font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.12em;
+    background-image:linear-gradient(180deg,#8a8a94 0%,#3c3c44 100%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .cat-title{font-size:clamp(1.05rem,1.7vw,1.2rem);letter-spacing:-.015em;font-weight:500;
+    background-image:linear-gradient(120deg,#ffffff 0%,#c2c2ca 100%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:10px}
+  .cat-desc{color:var(--muted);font-size:.92rem;line-height:1.75;max-width:62ch}
+  .cat-desc + .cat-desc{margin-top:10px}
+  .cat-list{margin-top:14px;display:flex;flex-wrap:wrap;gap:7px}
+  .cat-list span{font-size:.68rem;letter-spacing:.05em;border:1px solid var(--line);border-radius:999px;padding:4px 10px;
+    background-image:linear-gradient(180deg,#a8a8b2 0%,#5a5a63 100%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+
+  .studio-wrap{max-width:900px}
+  .studio-block + .studio-block{margin-top:38px}
+  .studio-h{font-size:1.05rem;font-weight:500;letter-spacing:-.005em;
+    background-image:linear-gradient(120deg,#ffffff 0%,#d8b384 100%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:14px}
+  .studio-h.plain{background-image:linear-gradient(180deg,#ffffff 0%,#c2c2ca 100%)}
+  .studio-block p{color:var(--muted);font-size:.97rem;line-height:1.8;max-width:64ch}
+  .studio-block p + p{margin-top:10px}
+  .studio-block ul{list-style:none;padding:0;margin:0}
+  .studio-block li{color:var(--muted);font-size:.93rem;line-height:1.7;padding:7px 0 7px 22px;position:relative}
+  .studio-block li::before{content:'';position:absolute;left:4px;top:16px;width:6px;height:6px;border:1px solid rgba(255,255,255,.28);transform:rotate(45deg)}
+  .langs{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .langs span{font-size:.76rem;letter-spacing:.04em;border:1px solid var(--line);border-radius:999px;padding:6px 13px;
+    background-image:linear-gradient(180deg,#a8a8b2 0%,#6a6a74 100%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .handles{display:flex;flex-direction:column;gap:6px;margin-top:14px}
+  .handles a{font-family:'JetBrains Mono',monospace;font-size:.95rem;padding:10px 14px;border:1px solid var(--line);border-radius:10px;
+    background:linear-gradient(180deg,#0d0d11,#0a0a0d);color:var(--text);
+    transition:border-color .35s var(--ease), transform .4s var(--ease-out);align-self:flex-start}
+  .handles a:hover{border-color:rgba(216,179,132,.4);transform:translateX(4px)}
+
+  .app-shell{margin-top:clamp(50px,8vh,80px);border:1px solid var(--line);border-radius:18px;
+    background:linear-gradient(170deg,#0c0c10,#08080a);overflow:hidden;
+    box-shadow:0 40px 100px -60px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.03)}
+  .app-head{padding:clamp(22px,3vw,32px) clamp(20px,3.5vw,34px);border-bottom:1px solid var(--line);background:rgba(6,6,8,.5)}
+  .app-head h3{font-size:1.2rem;font-weight:500;letter-spacing:-.02em;
+    background-image:linear-gradient(120deg,#ffffff 0%,#d8b384 100%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .app-head p{margin-top:8px;font-size:.88rem;color:var(--muted);max-width:60ch;line-height:1.7}
+  .app-body{padding:clamp(20px,3.5vw,36px)}
+
+  .fset{margin-bottom:28px}
+  .fset-label{font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin-bottom:14px;
+    display:flex;align-items:center;gap:10px}
+  .fset-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(255,255,255,.08),transparent)}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media (max-width:640px){.grid-2,.grid-3{grid-template-columns:1fr}}
+
+  .field{display:block;position:relative}
+  .field + .field{margin-top:14px}
+  .field > .label{display:block;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:7px}
+  .field input[type="text"],.field input[type="number"],.field input[type="email"],.field input[type="tel"],.field input[type="password"],.field select,.field textarea{
+    width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--line-strong);background:rgba(0,0,0,.35);
+    color:var(--text);font:inherit;font-size:.92rem;outline:none;resize:vertical;
+    transition:border-color .3s var(--ease), background .3s var(--ease), box-shadow .3s var(--ease)}
+  .field textarea{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;font-size:.82rem;line-height:1.65;min-height:110px}
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:rgba(216,179,132,.55);background:rgba(0,0,0,.5);box-shadow:0 0 0 3px rgba(216,179,132,.06)}
+  .field.error input,.field.error select,.field.error textarea{border-color:rgba(224,139,139,.6);background:rgba(224,139,139,.04)}
+  .field .hint{display:block;font-size:.72rem;color:var(--dim);margin-top:6px}
+  .field .err-msg{display:none;font-size:.75rem;color:#efb1b1;margin-top:6px}
+  .field.error .err-msg{display:block}
+  .field select{appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238b8b94' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
+  .field select option{background:#0b0b0e;color:var(--text)}
+
+  .upload{position:relative;border:1px dashed rgba(255,255,255,.18);border-radius:12px;padding:18px;background:rgba(255,255,255,.012);
+    cursor:pointer;outline:none;transition:border-color .3s var(--ease), background .3s var(--ease), transform .3s var(--ease)}
+  .upload:hover,.upload:focus-visible{border-color:rgba(216,179,132,.4);background:rgba(216,179,132,.03)}
+  .upload.dragging{border-color:rgba(216,179,132,.65);background:rgba(216,179,132,.06)}
+  .upload.loaded{border-style:solid;border-color:rgba(123,198,154,.35);background:rgba(123,198,154,.035)}
+  .upload input[type="file"]{display:none}
+  .upload-row{display:flex;align-items:center;gap:14px}
+  .upload-ic{width:36px;height:36px;flex-shrink:0;display:grid;place-items:center;border-radius:9px;border:1px solid var(--line-strong);
+    color:var(--muted);font-size:.95rem;transition:border-color .3s, color .3s}
+  .upload:hover .upload-ic{border-color:rgba(216,179,132,.4);color:var(--accent)}
+  .upload-info{flex:1;min-width:0}
+  .upload-title{font-size:.85rem;color:var(--text);margin-bottom:3px}
+  .upload-hint{font-size:.72rem;color:var(--dim)}
+  .upload-file{font-size:.75rem;font-family:'JetBrains Mono',monospace;color:var(--ok);margin-top:4px;word-break:break-all}
+  .upload-thumb{margin-top:12px;display:none}
+  .upload.loaded .upload-thumb{display:block}
+  .upload-thumb img{max-width:100%;max-height:180px;border-radius:8px;border:1px solid var(--line);display:block}
+
+  .submit-bar{margin-top:30px;padding-top:26px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+  .submit-bar .note{flex:1;font-size:.75rem;color:var(--dim);min-width:200px;line-height:1.5}
+
+  .pill-status{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:.68rem;
+    letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--line)}
+  .pill-status.pending{color:#e0c68b;border-color:rgba(224,198,139,.35);background:rgba(224,198,139,.06)}
+  .pill-status.accepted{color:#a9dcc0;border-color:rgba(123,198,154,.35);background:rgba(123,198,154,.06)}
+  .pill-status.rejected{color:#efb1b1;border-color:rgba(224,139,139,.35);background:rgba(224,139,139,.06)}
+
+  .ticket-panel{display:none;margin-top:26px;padding:26px;border:1px solid rgba(123,198,154,.3);border-radius:14px;
+    background:linear-gradient(165deg,rgba(123,198,154,.06),rgba(123,198,154,.015));text-align:left}
+  .ticket-panel.show{display:block;animation:rise .6s var(--ease-out) both}
+  .ticket-panel h4{font-size:1.05rem;font-weight:500;margin-bottom:14px;
+    background-image:linear-gradient(120deg,#ffffff 0%,#a9dcc0 100%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .ticket-num{font-family:'JetBrains Mono',monospace;font-size:clamp(1.6rem,4vw,2.2rem);letter-spacing:.04em;
+    background-image:linear-gradient(120deg,#ffffff 0%,#d8b384 100%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin:8px 0 14px}
+  .ticket-panel p{font-size:.88rem;color:var(--muted);line-height:1.75;max-width:60ch}
+  .ticket-panel p + p{margin-top:8px}
+  .ticket-panel strong{color:var(--text);font-weight:500}
+
+  .status-wrap{max-width:820px;margin:0 auto}
+  .status-lookup{display:flex;gap:10px;flex-wrap:wrap;margin:26px 0 22px}
+  .status-lookup input{flex:1 1 220px;min-width:0;padding:13px 15px;border-radius:10px;border:1px solid var(--line-strong);background:rgba(0,0,0,.35);color:var(--text);font:inherit;outline:none}
+  .status-lookup input:focus{border-color:rgba(216,179,132,.55);box-shadow:0 0 0 3px rgba(216,179,132,.06)}
+  .status-cards{display:grid;gap:12px}
+  .status-card{padding:20px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(165deg,#0c0c10,#08080a);min-width:0}
+  .status-card-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .status-card-ticket{font:500 clamp(1.35rem,4vw,1.8rem) 'JetBrains Mono',monospace;letter-spacing:.04em;color:var(--text);overflow-wrap:anywhere}
+  .status-card-meta{color:var(--dim);font-size:.78rem;margin-top:10px;line-height:1.6}
+  .status-card-message{color:var(--muted);font-size:.88rem;line-height:1.7;margin-top:12px}
+  .status-empty{padding:28px 20px;border:1px dashed var(--line-strong);border-radius:12px;color:var(--muted);text-align:center;font-size:.88rem;line-height:1.7}
+  .status-remove{font-size:.72rem;color:var(--dim);text-decoration:underline;text-underline-offset:3px;margin-top:12px}
+  @media(max-width:520px){.status-lookup .btn{width:100%;justify-content:center}}
+
+  .dash-login{max-width:420px;margin:0 auto;border:1px solid var(--line);border-radius:18px;
+    background:linear-gradient(170deg,#0c0c10,#08080a);padding:clamp(28px,4vw,42px);
+    box-shadow:0 40px 100px -60px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.03)}
+  .dash-login h3{font-size:1.35rem;font-weight:500;letter-spacing:-.02em;margin-bottom:8px;
+    background-image:linear-gradient(120deg,#ffffff 0%,#d8b384 100%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .dash-login .sub{font-size:.88rem;color:var(--muted);margin-bottom:26px;line-height:1.7}
+  .dash-login .btn{width:100%;justify-content:center;margin-top:22px}
+  .login-error{display:none;margin-top:14px;padding:11px 13px;border-radius:10px;font-size:.82rem;
+    border:1px solid rgba(224,139,139,.3);background:rgba(224,139,139,.06);color:#efb1b1}
+  .login-error.show{display:block;animation:rise .35s var(--ease-out) both}
+
+  .dash-shell{display:none}
+  .dash-shell.show{display:block}
+  .dash-top{display:flex;flex-wrap:wrap;gap:14px;justify-content:space-between;align-items:center;margin-bottom:clamp(24px,4vh,36px)}
+  .dash-top h2{font-size:clamp(1.5rem,3vw,2rem);font-weight:500;letter-spacing:-.03em;
+    background-image:linear-gradient(180deg,#ffffff 0%,#c2c2ca 100%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .dash-top .who{font-size:.75rem;color:var(--dim);margin-top:4px;letter-spacing:.05em}
+  .dash-top-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:clamp(22px,3.5vh,32px)}
+  .stat-card{padding:18px 20px;border-radius:12px;border:1px solid var(--line);background:linear-gradient(165deg,var(--matte),#08080a);
+    transition:border-color .4s var(--ease), transform .4s var(--ease-out)}
+  .stat-card:hover{border-color:rgba(255,255,255,.14);transform:translateY(-2px)}
+  .stat-n{display:block;font-size:1.7rem;letter-spacing:-.04em;font-weight:500;
+    background-image:linear-gradient(180deg,#ffffff 0%,#b4b4be 100%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .stat-l{display:block;font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-top:6px}
+  .stat-card.pending .stat-n{background-image:linear-gradient(180deg,#f4dfbe 0%,#c69d68 100%)}
+  .stat-card.accepted .stat-n{background-image:linear-gradient(180deg,#b8e5cc 0%,#5c9c78 100%)}
+  .stat-card.rejected .stat-n{background-image:linear-gradient(180deg,#efb1b1 0%,#a35f5f 100%)}
+
+  .search-wrap{position:relative;margin-bottom:20px}
+  .search-wrap input{width:100%;padding:14px 16px 14px 44px;border-radius:12px;border:1px solid var(--line-strong);
+    background:rgba(0,0,0,.4);color:var(--text);font:inherit;font-size:.9rem;outline:none;
+    transition:border-color .3s var(--ease), background .3s var(--ease)}
+  .search-wrap input:focus{border-color:rgba(216,179,132,.55);background:rgba(0,0,0,.55)}
+  .search-wrap .search-ic{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:var(--dim);pointer-events:none;font-size:.9rem}
+
+  .filter-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px}
+  .filter-row button{padding:6px 13px;border-radius:999px;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;
+    border:1px solid var(--line);color:var(--dim);transition:color .3s, border-color .3s, background .3s}
+  .filter-row button:hover{color:var(--text)}
+  .filter-row button.on{color:var(--text);border-color:rgba(255,255,255,.24);background:rgba(255,255,255,.05)}
+
+  .dash-layout{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:20px;align-items:start}
+  @media (max-width:960px){.dash-layout{grid-template-columns:1fr}}
+
+  .app-list{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:linear-gradient(170deg,#0c0c10,#08080a);
+    max-height:640px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.1) transparent}
+  .app-list::-webkit-scrollbar{width:6px}
+  .app-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:6px}
+  .app-item{width:100%;text-align:left;padding:16px 18px;border-bottom:1px solid var(--line);
+    transition:background .3s var(--ease), padding-left .4s var(--ease-out);display:block}
+  .app-item:last-child{border-bottom:0}
+  .app-item:hover{background:rgba(255,255,255,.028);padding-left:22px}
+  .app-item.on{background:rgba(216,179,132,.05);border-left:2px solid var(--accent);padding-left:16px}
+  .app-item .row1{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+  .app-item .ticket{font-family:'JetBrains Mono',monospace;font-size:.98rem;letter-spacing:.02em;
+    background-image:linear-gradient(120deg,#ffffff 0%,#d8b384 100%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .app-item .row2{font-size:.78rem;color:var(--dim);display:flex;gap:10px;flex-wrap:wrap}
+  .app-item .row2 .dot{opacity:.5}
+  .empty-state{padding:48px 24px;text-align:center;color:var(--dim);font-size:.88rem}
+
+  .detail-pane{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:linear-gradient(170deg,#0c0c10,#08080a);min-height:300px}
+  .detail-empty{padding:80px 24px;text-align:center;color:var(--dim);font-size:.9rem}
+  .detail-head{padding:24px 26px;border-bottom:1px solid var(--line);background:rgba(6,6,8,.6)}
+  .detail-head .ticket{font-family:'JetBrains Mono',monospace;font-size:clamp(1.4rem,3vw,1.9rem);letter-spacing:.03em;
+    background-image:linear-gradient(120deg,#ffffff 0%,#d8b384 100%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .detail-head .meta{display:flex;flex-wrap:wrap;gap:16px;margin-top:10px;font-size:.78rem;color:var(--dim);letter-spacing:.03em}
+  .detail-head .meta b{color:var(--muted);font-weight:500}
+  .detail-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+  .detail-body{padding:24px 26px}
+  .detail-section + .detail-section{margin-top:26px;padding-top:22px;border-top:1px solid var(--line)}
+  .detail-section h5{font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin-bottom:14px}
+  .kv{display:grid;grid-template-columns:170px 1fr;gap:10px 20px;font-size:.88rem}
+  .kv .k{color:var(--dim);font-size:.78rem;letter-spacing:.04em;text-transform:uppercase;padding-top:2px}
+  .kv .v{color:var(--text);line-height:1.7;word-break:break-word}
+  .kv .v.blank{color:var(--dim);font-style:italic}
+  @media (max-width:520px){.kv{grid-template-columns:1fr;gap:4px 0}.kv .k{padding-top:8px}}
+  .file-card{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:rgba(255,255,255,.012);max-width:420px}
+  .file-card img{max-width:100%;display:block}
+  .file-card .fc-foot{padding:10px 12px;display:flex;justify-content:space-between;gap:10px;font-size:.74rem;color:var(--dim);
+    border-top:1px solid var(--line);word-break:break-all}
+  .file-card .fc-foot a{color:var(--accent);flex-shrink:0}
+  .msg-box{padding:14px 16px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.014);
+    font-size:.88rem;color:var(--text);line-height:1.75;white-space:pre-wrap;word-break:break-word}
+
+  .confirm{position:fixed;inset:0;z-index:120;display:grid;place-items:center;padding:20px;opacity:0;visibility:hidden;
+    transition:opacity .3s var(--ease-out), visibility 0s linear .3s}
+  .confirm.open{opacity:1;visibility:visible;transition:opacity .3s var(--ease-out), visibility 0s}
+  .confirm-scrim{position:absolute;inset:0;background:rgba(3,3,4,.8);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
+  .confirm-box{position:relative;max-width:400px;width:100%;border:1px solid var(--line-strong);border-radius:16px;
+    background:linear-gradient(180deg,#101014,#0a0a0d);padding:26px;
+    transform:translateY(16px) scale(.96);opacity:0;
+    transition:transform .45s var(--ease-out), opacity .3s var(--ease-out)}
+  .confirm.open .confirm-box{transform:none;opacity:1}
+  .confirm-box h4{font-size:1.1rem;font-weight:500;margin-bottom:10px;
+    background-image:linear-gradient(120deg,#ffffff 0%,#efb1b1 100%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .confirm-box p{font-size:.88rem;color:var(--muted);line-height:1.7;margin-bottom:22px}
+  .confirm-actions{display:flex;gap:10px;justify-content:flex-end}
+
+  /* SUCCESS MODAL */
+  .success-modal{position:fixed;inset:0;z-index:130;display:grid;place-items:center;padding:20px;
+    opacity:0;visibility:hidden;transition:opacity .35s var(--ease-out), visibility 0s linear .35s}
+  .success-modal.open{opacity:1;visibility:visible;transition:opacity .35s var(--ease-out), visibility 0s}
+  .success-scrim{position:absolute;inset:0;background:rgba(3,3,4,.82);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  .success-box{position:relative;max-width:440px;width:100%;border:1px solid var(--line-strong);border-radius:18px;
+    background:linear-gradient(180deg,#101014,#0a0a0d);padding:38px 30px 30px;text-align:center;
+    box-shadow:0 60px 120px -60px #000, inset 0 1px 0 rgba(255,255,255,.04);
+    transform:translateY(18px) scale(.94);opacity:0;
+    transition:transform .55s var(--ease-out), opacity .35s var(--ease-out)}
+  .success-modal.open .success-box{transform:none;opacity:1}
+  .success-icon{width:58px;height:58px;margin:0 auto 18px;display:grid;place-items:center;border-radius:50%;
+    border:1px solid rgba(123,198,154,.4);background:rgba(123,198,154,.08);color:#a9dcc0;
+    font-size:1.6rem;font-weight:500;line-height:1;
+    animation:successPop .6s var(--ease-out) .12s both}
+  @keyframes successPop{0%{transform:scale(.4);opacity:0}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+  .success-box h4{font-size:1.25rem;font-weight:500;letter-spacing:-.02em;margin-bottom:12px;
+    background-image:linear-gradient(120deg,#ffffff 0%,#a9dcc0 100%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .success-box p{font-size:.96rem;color:var(--muted);line-height:1.75;margin-bottom:26px;max-width:36ch;margin-left:auto;margin-right:auto}
+  .success-box .btn{min-width:130px;justify-content:center}
+
+  .cur,.cur-dot{position:fixed;top:0;left:0;z-index:9999;pointer-events:none;border-radius:50%;opacity:0}
+  .cur{width:34px;height:34px;border:1px solid rgba(255,255,255,.28);margin:-17px 0 0 -17px;
+    transition:width .3s var(--ease-out), height .3s var(--ease-out), margin .3s var(--ease-out), border-color .3s var(--ease), opacity .3s}
+  .cur-dot{width:5px;height:5px;background:var(--accent);margin:-2.5px 0 0 -2.5px;transition:opacity .3s}
+  .cur.hot{width:54px;height:54px;margin:-27px 0 0 -27px;border-color:rgba(216,179,132,.55)}
+  body.cursor-on .cur,body.cursor-on .cur-dot{opacity:1}
+  body.cursor-on{cursor:none}
+  body.cursor-on a,body.cursor-on button{cursor:none}
+
+  .progress{margin-top:18px;display:none}
+  .progress.show{display:block}
+  .progress-bar{height:3px;border-radius:2px;overflow:hidden;background:rgba(255,255,255,.06)}
+  .progress-bar span{display:block;height:100%;width:0;
+    background-image:linear-gradient(90deg,#d8b384,#f4dfbe);transition:width .35s var(--ease-out)}
+  .progress-text{margin-top:8px;font-size:.74rem;color:var(--muted);letter-spacing:.02em}
+
+  .status{margin-top:16px;padding:12px 14px;border-radius:10px;font-size:.85rem;line-height:1.6;display:none}
+  .status.show{display:block;animation:rise .35s var(--ease-out) both}
+  .status.ok{border:1px solid rgba(123,198,154,.3);background:rgba(123,198,154,.06);color:#a9dcc0}
+  .status.err{border:1px solid rgba(224,139,139,.3);background:rgba(224,139,139,.06);color:#efb1b1}
+  .status.info{border:1px solid var(--line-strong);background:rgba(255,255,255,.02);color:var(--muted)}
+  .status.warn{border:1px solid rgba(224,198,139,.3);background:rgba(224,198,139,.06);color:#e0c68b}
+
+  @media (max-width:820px){.cat{grid-template-columns:1fr;gap:10px}}
+  @media (max-width:720px){
+    .nav{padding:12px clamp(12px,4vw,20px)}
+    .nav-status{display:none}
+    .links button{padding:7px 11px;font-size:.74rem}
+    .brand-name{display:none}
+  }
+  @media (hover:none){.cur,.cur-dot{display:none}}
+  @media (prefers-reduced-motion:reduce){*{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.08s !important}}
+
+  /* Application form: consistent upload-card alignment across screen sizes */
+  .app-shell, .app-body, #appForm, .fset, .field { min-width:0; }
+  .grid-2, .grid-3 { width:100%; }
+  .upload {
+    display:block;
+    width:100%;
+    min-width:0;
+    min-height:88px;
+    padding:clamp(14px,2.5vw,20px);
+    overflow:hidden;
+  }
+  .upload-row {
+    display:flex;
+    width:100%;
+    min-width:0;
+    align-items:center;
+    gap:14px;
+  }
+  .upload-ic {
+    width:42px;
+    height:42px;
+    flex:0 0 42px;
+  }
+  .upload-info { flex:1 1 auto; min-width:0; }
+  .upload-title {
+    display:block;
+    max-width:100%;
+    line-height:1.5;
+    overflow-wrap:anywhere;
+    word-break:normal;
+  }
+  .upload-hint { line-height:1.5; }
+  .upload-thumb { max-width:100%; }
+  .upload-thumb img { width:auto; max-width:100%; height:auto; object-fit:contain; }
+  @media (max-width:640px) {
+    .app-body { padding:clamp(16px,4vw,24px); }
+    .grid-2, .grid-3 { grid-template-columns:minmax(0,1fr); }
+    .fset { margin-bottom:24px; }
+    .upload { min-height:82px; }
+    .submit-bar { align-items:stretch; }
+    .submit-bar .btn { justify-content:center; }
+    .submit-bar .note { flex-basis:100%; min-width:0; }
+  }
+  @media (min-width:641px) and (max-width:900px) {
+    .grid-2 { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .grid-3 { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  }
+  @media (max-width:360px) {
+    .upload-row { gap:10px; }
+    .upload-ic { width:38px; height:38px; flex-basis:38px; }
+    .upload-title { font-size:.8rem; }
+  }
+
+</style>
+</head>
+<body>
+
+<canvas id="bg"></canvas>
+<div class="grain"></div>
+
+<header class="nav">
+  <button class="brand" data-go="studio" aria-label="Home">
+    <span class="brand-mark"></span>
+    <span class="brand-name">ByteMatrix</span>
+  </button>
+  <nav class="links" id="links">
+    <span class="pill" id="pill"></span>
+    <button data-go="studio">Studio</button>
+    <button data-go="contact">Contact</button>
+    <button data-go="status">Status</button>
+    <button data-go="dashboard">Dashboard</button>
+  </nav>
+  <div class="nav-status"><span class="pulse"></span><span class="lbl">MTRX</span></div>
+</header>
+
+<main>
+
+  <section class="view" id="view-work" data-view="work">
+    <div class="inner">
+      <header class="section-head">
+        <p class="eyebrow warm rise" style="--d:.05s"><span class="pulse"></span><span class="etext">Utilities</span></p>
+        <h2 class="section-title rise grad g-down" style="--d:.12s">Practical tools, running in your browser.</h2>
+        <p class="lede rise" style="--d:.2s;margin-top:20px">Everything below runs client-side. Files are not uploaded anywhere. The encryption uses the Web Crypto API; the obfuscators are real source transformations, not formatting tricks.</p>
+        <span class="rule rise" style="--d:.24s"></span>
+      </header>
+      <div class="work-intro rise" style="--d:.28s">
+        <p class="lede">These utilities are for developers who need to encrypt a file, protect a script, or look at something they did not write. Each tool is independent and works on its own.</p>
+      </div>
+      <div id="workList"></div>
+    </div>
+  </section>
+
+  <section class="view" id="view-studio" data-view="studio">
+    <div class="inner">
+      <header class="section-head">
+        <p class="eyebrow rise" style="--d:.05s"><span class="etext">Studio · MTRX Clan Recruitment</span></p>
+        <span class="rule rise" style="--d:.14s"></span>
+      </header>
+
+      <div class="studio-wrap">
+        <div class="studio-block rise" style="--d:.18s">
+          <h3 class="studio-h">MTRX Clan Recruitment</h3>
+          <p>We're building a community for developers who enjoy learning, creating, and sharing knowledge. Whether you're experienced or still growing your skills, you're welcome to join us.</p>
+        </div>
+
+        <div class="studio-block rise" style="--d:.24s">
+          <h3 class="studio-h plain">What we're looking for</h3>
+          <ul>
+            <li>Interest in programming and software development</li>
+            <li>Familiarity with C++, reverse engineering, or other low-level technologies is a plus</li>
+            <li>Willingness to learn and help others</li>
+            <li>Respectful, active, and collaborative attitude</li>
+            <li>No drama, just a positive environment</li>
+          </ul>
+        </div>
+
+        <div class="studio-block rise" style="--d:.3s">
+          <h3 class="studio-h plain">You don't need to be an expert</h3>
+          <p>If you're passionate about coding and eager to improve, you'll fit right in. We value curiosity, consistency, and teamwork more than years of experience.</p>
+        </div>
+
+        <div class="studio-block rise" style="--d:.36s">
+          <h3 class="studio-h plain">Languages</h3>
+          <div class="langs">
+            <span>C</span><span>C++</span><span>C#</span><span>Python</span><span>Java</span>
+            <span>Basic HTML, CSS, JavaScript</span><span>SQL</span>
+          </div>
+        </div>
+
+        <div class="studio-block rise" style="--d:.42s">
+          <h3 class="studio-h plain">Areas of Interest</h3>
+          <ul>
+            <li>Reverse Engineering</li>
+            <li>Game Security &amp; Analysis</li>
+            <li>Windows Internals</li>
+            <li>Assembly</li>
+            <li>Low-Level Programming</li>
+            <li>Tools &amp; Utilities</li>
+            <li>Open-Source Projects</li>
+          </ul>
+        </div>
+
+        <div class="studio-block rise" style="--d:.48s">
+          <h3 class="studio-h plain">REQUIREMENTS</h3>
+          <p>Make sure you have Telegram to be in our community. Message those 3 to get the announcement whenever you are approval or not approve that's all</p>
+        </div>
+
+        <div class="studio-block rise" style="--d:.54s">
+          <h3 class="studio-h">MESSAGE THESE 3 FOR THE ANNOUNCEMENT OF YOU'RE SUMMITED APPLICATIONS👇👇👇</h3>
+          <div class="handles">
+            <a href="https://t.me/XevrynXen" target="_blank" rel="noopener">@XevrynXen</a>
+            <a href="https://t.me/shenrukai" target="_blank" rel="noopener">@shenrukai</a>
+            <a href="https://t.me/syntax404errorrr" target="_blank" rel="noopener">@syntax404errorrr</a>
+          </div>
+        </div>
+
+        <div class="app-shell" id="appShell">
+          <div class="app-head">
+            <h3>Application Form</h3>
+            <p>Complete every field. Upload the four required proofs, write your message, and submit. On success, the application is stored in Firestore and you receive a unique ticket number.</p>
+          </div>
+
+          <div class="app-body">
+            <form id="appForm" novalidate>
+
+              <div class="fset">
+                <div class="fset-label">Required submissions</div>
+
+                <div class="grid-2">
+                  <div class="field">
+                    <span class="label">FB Pic</span>
+                    <label class="upload" data-upload="fbPic" tabindex="0">
+                      <input type="file" accept="image/*,application/pdf,.jpg,.jpeg,.png,.webp,.gif,.pdf" data-file="fbPic">
+                      <div class="upload-row">
+                        <div class="upload-ic">↑</div>
+                        <div class="upload-info">
+                          <div class="upload-title">Upload FB profile proof (NO SMURF ALLOWED)</div>
+                          <div class="upload-hint">Image or PDF · auto-compressed</div>
+                          <div class="upload-file" data-filename="fbPic"></div>
+                        </div>
+                      </div>
+                      <div class="upload-thumb" data-thumb="fbPic"></div>
+                    </label>
+                    <span class="err-msg" data-err="fbPic">FB Pic is required.</span>
+                  </div>
+
+                  <div class="field">
+                    <span class="label">TG Number</span>
+                    <label class="upload" data-upload="tgNumberFile" tabindex="0">
+                      <input type="file" accept="image/*,application/pdf,.jpg,.jpeg,.png,.webp,.gif,.pdf" data-file="tgNumberFile">
+                      <div class="upload-row">
+                        <div class="upload-ic">↑</div>
+                        <div class="upload-info">
+                          <div class="upload-title">Upload TG number proof</div>
+                          <div class="upload-hint">Image or PDF · auto-compressed</div>
+                          <div class="upload-file" data-filename="tgNumberFile"></div>
+                        </div>
+                      </div>
+                      <div class="upload-thumb" data-thumb="tgNumberFile"></div>
+                    </label>
+                    <span class="err-msg" data-err="tgNumberFile">TG Number is required.</span>
+                  </div>
+                </div>
+
+                <div class="grid-2" style="margin-top:14px">
+                  <div class="field">
+                    <span class="label">Number</span>
+                    <input type="tel" id="appNumber" name="number" placeholder="+63 912 345 6789" autocomplete="tel">
+                    <span class="err-msg" data-err="number">Enter a valid phone number.</span>
+                  </div>
+
+                  <div class="field">
+                    <span class="label">TG ID</span>
+                    <input type="text" id="appTgId" name="tgId" placeholder="Telegram ID (numeric or @handle)">
+                    <span class="err-msg" data-err="tgId">TG ID is required.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="fset">
+                <div class="fset-label">Applicant details</div>
+
+                <div class="grid-2">
+                  <div class="field">
+                    <span class="label">Discord username</span>
+                    <input type="text" id="appDiscord" placeholder="username#0000" autocomplete="off">
+                    <span class="err-msg" data-err="discord">Discord username is required.</span>
+                  </div>
+
+                  <div class="field">
+                    <span class="label">Telegram username</span>
+                    <input type="text" id="appTgUser" placeholder="@username" autocomplete="off">
+                    <span class="err-msg" data-err="tgUser">Telegram username is required.</span>
+                  </div>
+                </div>
+
+                <div class="grid-3" style="margin-top:14px">
+                  <div class="field">
+                    <span class="label">Age</span>
+                    <input type="number" id="appAge" min="10" max="99" placeholder="18">
+                    <span class="err-msg" data-err="age">Enter a valid age.</span>
+                  </div>
+
+                  <div class="field">
+                    <span class="label">Country</span>
+                    <input type="text" id="appCountry" placeholder="Philippines" autocomplete="country-name">
+                    <span class="err-msg" data-err="country">Country is required.</span>
+                  </div>
+
+                  <div class="field">
+                    <span class="label">Programming experience</span>
+                    <select id="appExp">
+                      <option value="">Select…</option>
+                      <option value="beginner">Beginner</option>
+                      <option value="intermediate">Intermediate</option>
+                      <option value="advanced">Advanced</option>
+                      <option value="professional">Professional</option>
+                    </select>
+                    <span class="err-msg" data-err="exp">Select your experience level.</span>
+                  </div>
+                </div>
+
+                <div class="field" style="margin-top:14px">
+                  <span class="label">Programming languages</span>
+                  <input type="text" id="appLangs" placeholder="C++, Python, JavaScript…">
+                  <span class="hint">Comma-separated list is fine.</span>
+                </div>
+
+                <div class="field" style="margin-top:14px">
+                  <span class="label">Areas of interest</span>
+                  <input type="text" id="appAreas" placeholder="Reverse Engineering, Windows Internals…">
+                </div>
+              </div>
+
+              <div class="fset">
+                <div class="fset-label">Experience</div>
+
+                <div class="grid-3">
+                  <div class="field">
+                    <span class="label">C / C++</span>
+                    <select id="appCpp">
+                      <option value="">Select…</option>
+                      <option value="none">None</option>
+                      <option value="basic">Basic</option>
+                      <option value="comfortable">Comfortable</option>
+                      <option value="advanced">Advanced</option>
+                    </select>
+                    <span class="err-msg" data-err="cpp">Select your C/C++ level.</span>
+                  </div>
+
+                  <div class="field">
+                    <span class="label">Reverse engineering</span>
+                    <select id="appRe">
+                      <option value="">Select…</option>
+                      <option value="none">None</option>
+                      <option value="basic">Basic</option>
+                      <option value="comfortable">Comfortable</option>
+                      <option value="advanced">Advanced</option>
+                    </select>
+                    <span class="err-msg" data-err="re">Select your RE level.</span>
+                  </div>
+
+                  <div class="field">
+                    <span class="label">Low-level programming</span>
+                    <select id="appLow">
+                      <option value="">Select…</option>
+                      <option value="none">None</option>
+                      <option value="basic">Basic</option>
+                      <option value="comfortable">Comfortable</option>
+                      <option value="advanced">Advanced</option>
+                    </select>
+                    <span class="err-msg" data-err="low">Select your level.</span>
+                  </div>
+                </div>
+
+                <div class="field" style="margin-top:14px">
+                  <span class="label">Projects or previous work</span>
+                  <textarea id="appProjects" data-textarea placeholder="Describe the things you've built. Links are welcome."></textarea>
+                </div>
+
+                <div class="field" style="margin-top:14px">
+                  <span class="label">Why you want to join MTRX</span>
+                  <textarea id="appWhy" data-textarea placeholder="Write in your own words."></textarea>
+                  <span class="err-msg" data-err="why">Please explain why you want to join.</span>
+                </div>
+
+                <div class="field" style="margin-top:14px">
+                  <span class="label">Additional information</span>
+                  <textarea id="appExtra" data-textarea placeholder="Anything else we should know."></textarea>
+                </div>
+              </div>
+
+              <div class="fset">
+                <div class="fset-label">Message &amp; picture</div>
+
+                <div class="field">
+                  <span class="label">Message</span>
+                  <textarea id="appMessage" data-textarea placeholder="Write your message here."></textarea>
+                  <span class="err-msg" data-err="message">Message is required.</span>
+                </div>
+
+                <div class="field" style="margin-top:14px">
+                  <span class="label">Picture / File (optional)</span>
+                  <label class="upload" data-upload="pictureFile" tabindex="0">
+                    <input type="file" accept="image/*,application/pdf,.jpg,.jpeg,.png,.webp,.gif,.pdf" data-file="pictureFile">
+                    <div class="upload-row">
+                      <div class="upload-ic">↑</div>
+                      <div class="upload-info">
+                        <div class="upload-title">Telegram account proof (NO SMURF TG ACCOUNT ALLOWED)</div>
+                        <div class="upload-hint">Image or PDF · auto-compressed</div>
+                        <div class="upload-file" data-filename="pictureFile"></div>
+                      </div>
+                    </div>
+                    <div class="upload-thumb" data-thumb="pictureFile"></div>
+                  </label>
+                </div>
+              </div>
+
+              <div class="submit-bar">
+                <button type="submit" class="btn btn-primary" id="appSubmit">Submit Application</button>
+                <button type="button" class="btn btn-ghost" id="appReset">Reset Form</button>
+                <p class="note">Submitting stores the application in Firestore. You'll receive a unique ticket number to keep.</p>
+              </div>
+
+              <div class="progress" id="appProgress">
+                <div class="progress-bar"><span id="appBar"></span></div>
+                <p class="progress-text" id="appPhase">Idle</p>
+              </div>
+
+              <div class="status" id="appStatus"></div>
+
+              <div class="ticket-panel" id="ticketPanel">
+                <h4>Application submitted successfully.</h4>
+                <div class="ticket-num" id="ticketValue">#000000</div>
+                <p>Please DM the three MTRX contacts on Telegram to receive the final output.</p>
+                <p><strong>@XevrynXen &nbsp;·&nbsp; @shenrukai &nbsp;·&nbsp; @syntax404errorrr</strong></p>
+                <button class="btn btn-ghost btn-sm" type="button" data-go="status" style="margin-top:18px">View Application Status</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="view-contact" data-view="contact">
+    <div class="inner">
+      <div class="contact-wrap" style="max-width:720px">
+        <p class="eyebrow warm reveal"><span class="pulse"></span><span class="etext">Contact</span></p>
+        <h2 class="contact-title grad g-diag reveal" style="font-size:clamp(2rem,5.5vw,3.6rem);line-height:1.02;letter-spacing:-.04em;font-weight:500;margin:22px 0 26px">Get in touch.</h2>
+        <p class="reveal" style="font-size:1.05rem;line-height:2;color:var(--text);max-width:60ch;margin-top:26px">
+          if you have any problems or questions message <a href="https://t.me/XevrynXen" target="_blank" rel="noopener" style="background-image:linear-gradient(120deg,#f4dfbe 0%,#c69d68 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;border-bottom:1px solid rgba(216,179,132,.35);padding-bottom:1px">@XevrynXen</a> in telegram thank you for using my tools
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="view-tools" data-view="tools">
+    <div class="inner">
+      <header class="section-head">
+        <p class="eyebrow warm rise" style="--d:.05s"><span class="pulse"></span><span class="etext">Tools</span></p>
+        <h2 class="section-title rise grad g-down" style="--d:.12s">Five working utilities.</h2>
+        <span class="rule rise" style="--d:.2s"></span>
+      </header>
+
+      <div class="tools-shell" style="border:1px solid var(--line);border-radius:18px;background:linear-gradient(170deg,#0c0c10,#08080a);overflow:hidden;box-shadow:0 40px 100px -60px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.03)">
+        <div class="tool-tabs" id="toolTabs" role="tablist" style="display:flex;flex-wrap:wrap;gap:2px;padding:8px;border-bottom:1px solid var(--line);background:rgba(6,6,8,.6);overflow-x:auto">
+          <button data-tool="encrypt" class="on" role="tab" aria-selected="true" style="flex-shrink:0;padding:10px 16px;border-radius:10px;font-size:.82rem;color:var(--muted);border:1px solid transparent;white-space:nowrap">File Encryptor</button>
+          <button data-tool="decrypt" role="tab" aria-selected="false" style="flex-shrink:0;padding:10px 16px;border-radius:10px;font-size:.82rem;color:var(--muted);border:1px solid transparent;white-space:nowrap">File Decryptor</button>
+          <button data-tool="lua" role="tab" aria-selected="false" style="flex-shrink:0;padding:10px 16px;border-radius:10px;font-size:.82rem;color:var(--muted);border:1px solid transparent;white-space:nowrap">Lua Obfuscator</button>
+          <button data-tool="py" role="tab" aria-selected="false" style="flex-shrink:0;padding:10px 16px;border-radius:10px;font-size:.82rem;color:var(--muted);border:1px solid transparent;white-space:nowrap">Python Obfuscator</button>
+          <button data-tool="deobf" role="tab" aria-selected="false" style="flex-shrink:0;padding:10px 16px;border-radius:10px;font-size:.82rem;color:var(--muted);border:1px solid transparent;white-space:nowrap">Deobfuscator</button>
+        </div>
+
+        <div class="tool-panels" style="padding:clamp(20px,3.5vw,36px)">
+          <div class="tool-panel active" data-panel="encrypt">
+            <div style="margin-bottom:24px">
+              <h3 style="font-size:1.3rem;font-weight:500;letter-spacing:-.02em;background-image:linear-gradient(180deg,#ffffff 0%,#c2c2ca 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">File Encryptor</h3>
+              <p style="margin-top:8px;font-size:.9rem;color:var(--muted);max-width:62ch;line-height:1.7">Encrypts any file with AES-256-GCM. Key derived from your password with PBKDF2-SHA256. Output is a single .xev file that contains everything needed to decrypt it later.</p>
+            </div>
+            <div class="drop" data-drop="enc" tabindex="0" role="button" aria-label="Choose a file to encrypt" style="border:1px dashed rgba(255,255,255,.18);border-radius:14px;padding:36px 24px;text-align:center;cursor:pointer;background:rgba(255,255,255,.012)">
+              <input type="file" id="encFile" hidden>
+              <div style="width:44px;height:44px;margin:0 auto 14px;display:grid;place-items:center;border-radius:12px;border:1px solid var(--line-strong);color:var(--muted);font-size:1.1rem">↓</div>
+              <p style="font-size:.95rem;color:var(--text);margin-bottom:6px">Drop any file here or click to browse</p>
+              <p style="font-size:.78rem;color:var(--dim)">Images, videos, archives, executables, source, binaries — anything</p>
+            </div>
+            <div class="file-meta" id="encMeta" style="margin-top:16px;border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:rgba(255,255,255,.015);display:none">
+              <div style="display:flex;justify-content:space-between;gap:16px;font-size:.83rem;padding:5px 0"><span style="color:var(--dim);font-size:.72rem;text-transform:uppercase;letter-spacing:.05em">Name</span><span style="font-family:'JetBrains Mono',monospace;text-align:right;word-break:break-all;max-width:65%" id="encMetaName">—</span></div>
+              <div style="display:flex;justify-content:space-between;gap:16px;font-size:.83rem;padding:5px 0;border-top:1px solid var(--line)"><span style="color:var(--dim);font-size:.72rem;text-transform:uppercase;letter-spacing:.05em">Size</span><span style="font-family:'JetBrains Mono',monospace;text-align:right" id="encMetaSize">—</span></div>
+              <div style="display:flex;justify-content:space-between;gap:16px;font-size:.83rem;padding:5px 0;border-top:1px solid var(--line)"><span style="color:var(--dim);font-size:.72rem;text-transform:uppercase;letter-spacing:.05em">Type</span><span style="font-family:'JetBrains Mono',monospace;text-align:right" id="encMetaType">—</span></div>
+            </div>
+            <label style="margin-top:20px;display:block">
+              <span style="display:block;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:8px">Password</span>
+              <div style="position:relative">
+                <input type="password" id="encPass" placeholder="Enter a strong password" autocomplete="new-password" style="width:100%;padding:12px 84px 12px 14px;border-radius:10px;border:1px solid var(--line-strong);background:rgba(0,0,0,.35);color:var(--text);font:inherit;font-size:.92rem;outline:none">
+                <button class="input-toggle" data-toggle="encPass" type="button" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);padding:6px 10px;border-radius:6px;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)">Show</button>
+              </div>
+            </label>
+            <label style="margin-top:14px;display:block">
+              <span style="display:block;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:8px">Confirm password</span>
+              <div style="position:relative">
+                <input type="password" id="encPass2" placeholder="Repeat password" autocomplete="new-password" style="width:100%;padding:12px 84px 12px 14px;border-radius:10px;border:1px solid var(--line-strong);background:rgba(0,0,0,.35);color:var(--text);font:inherit;font-size:.92rem;outline:none">
+                <button class="input-toggle" data-toggle="encPass2" type="button" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);padding:6px 10px;border-radius:6px;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)">Show</button>
+              </div>
+            </label>
+            <div class="row-actions" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:20px">
+              <button class="btn btn-primary" id="encBtn" disabled>Encrypt file</button>
+              <button class="btn btn-ghost" id="encReset" type="button">Reset</button>
+            </div>
+            <div class="progress" id="encProgress">
+              <div class="progress-bar"><span id="encBar"></span></div>
+              <p class="progress-text" id="encPhase">Idle</p>
+            </div>
+            <div class="status" id="encStatus"></div>
+            <div class="output" id="encOutput" style="margin-top:22px;display:none">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:12px;flex-wrap:wrap">
+                <span style="font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)">Encrypted file ready</span>
+                <button data-download="enc" style="padding:6px 11px;border-radius:8px;font-size:.72rem;border:1px solid var(--line-strong);color:var(--muted)">Download .xev</button>
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:18px;font-size:.75rem;color:var(--dim);letter-spacing:.05em">
+                <span id="encOutSize">—</span><span id="encOutName">—</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="tool-panel" data-panel="decrypt">
+            <div style="margin-bottom:24px">
+              <h3 style="font-size:1.3rem;font-weight:500;letter-spacing:-.02em;background-image:linear-gradient(180deg,#ffffff 0%,#c2c2ca 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">File Decryptor</h3>
+              <p style="margin-top:8px;font-size:.9rem;color:var(--muted);max-width:62ch;line-height:1.7">Restores a .xev file created by the encryptor. Uses AES-256-GCM authentication, so a wrong password or modified file is rejected instead of producing garbage.</p>
+            </div>
+            <div class="drop" data-drop="dec" tabindex="0" role="button" aria-label="Choose a .xev file" style="border:1px dashed rgba(255,255,255,.18);border-radius:14px;padding:36px 24px;text-align:center;cursor:pointer;background:rgba(255,255,255,.012)">
+              <input type="file" id="decFile" hidden accept=".xev,application/octet-stream">
+              <div style="width:44px;height:44px;margin:0 auto 14px;display:grid;place-items:center;border-radius:12px;border:1px solid var(--line-strong);color:var(--muted);font-size:1.1rem">↓</div>
+              <p style="font-size:.95rem;color:var(--text);margin-bottom:6px">Drop a .xev file here or click to browse</p>
+              <p style="font-size:.78rem;color:var(--dim)">Only files produced by this encryptor will work</p>
+            </div>
+            <div class="file-meta" id="decMeta" style="margin-top:16px;border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:rgba(255,255,255,.015);display:none">
+              <div style="display:flex;justify-content:space-between;gap:16px;font-size:.83rem;padding:5px 0"><span style="color:var(--dim);font-size:.72rem;text-transform:uppercase">Name</span><span style="font-family:'JetBrains Mono',monospace;text-align:right;word-break:break-all;max-width:65%" id="decMetaName">—</span></div>
+              <div style="display:flex;justify-content:space-between;gap:16px;font-size:.83rem;padding:5px 0;border-top:1px solid var(--line)"><span style="color:var(--dim);font-size:.72rem;text-transform:uppercase">Size</span><span style="font-family:'JetBrains Mono',monospace" id="decMetaSize">—</span></div>
+              <div style="display:flex;justify-content:space-between;gap:16px;font-size:.83rem;padding:5px 0;border-top:1px solid var(--line)"><span style="color:var(--dim);font-size:.72rem;text-transform:uppercase">Original</span><span style="font-family:'JetBrains Mono',monospace;text-align:right;word-break:break-all;max-width:65%" id="decMetaOrig">—</span></div>
+            </div>
+            <label style="margin-top:20px;display:block">
+              <span style="display:block;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:8px">Password</span>
+              <div style="position:relative">
+                <input type="password" id="decPass" placeholder="Enter the password used to encrypt" autocomplete="current-password" style="width:100%;padding:12px 84px 12px 14px;border-radius:10px;border:1px solid var(--line-strong);background:rgba(0,0,0,.35);color:var(--text);font:inherit;font-size:.92rem;outline:none">
+                <button class="input-toggle" data-toggle="decPass" type="button" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);padding:6px 10px;border-radius:6px;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)">Show</button>
+              </div>
+            </label>
+            <div class="row-actions" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:20px">
+              <button class="btn btn-primary" id="decBtn" disabled>Decrypt file</button>
+              <button class="btn btn-ghost" id="decReset" type="button">Reset</button>
+            </div>
+            <div class="progress" id="decProgress">
+              <div class="progress-bar"><span id="decBar"></span></div>
+              <p class="progress-text" id="decPhase">Idle</p>
+            </div>
+            <div class="status" id="decStatus"></div>
+            <div class="output" id="decOutput" style="margin-top:22px;display:none">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:12px;flex-wrap:wrap">
+                <span style="font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)">Decrypted file ready</span>
+                <button data-download="dec" style="padding:6px 11px;border-radius:8px;font-size:.72rem;border:1px solid var(--line-strong);color:var(--muted)">Download original</button>
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:18px;font-size:.75rem;color:var(--dim)">
+                <span id="decOutSize">—</span><span id="decOutName">—</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="tool-panel" data-panel="lua">
+            <div style="margin-bottom:24px">
+              <h3 style="font-size:1.3rem;font-weight:500;letter-spacing:-.02em;background-image:linear-gradient(180deg,#ffffff 0%,#c2c2ca 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">Lua Obfuscator</h3>
+              <p style="margin-top:8px;font-size:.9rem;color:var(--muted);max-width:62ch;line-height:1.7">Renames locals, encodes string literals, strips comments and collapses whitespace. The output is still valid Lua and can be run directly.</p>
+            </div>
+            <div class="drop" data-drop="lua" tabindex="0" role="button" style="border:1px dashed rgba(255,255,255,.18);border-radius:14px;padding:24px;text-align:center;cursor:pointer;background:rgba(255,255,255,.012)">
+              <input type="file" id="luaFile" hidden accept=".lua,.txt,text/plain">
+              <p style="font-size:.9rem;color:var(--text);margin-bottom:4px">Drop a .lua file here or click to browse</p>
+              <p style="font-size:.75rem;color:var(--dim)">Or paste code below</p>
+            </div>
+            <div style="position:relative;margin-top:20px">
+              <textarea id="luaIn" placeholder="-- Paste Lua source here" spellcheck="false" style="width:100%;min-height:200px;padding:14px 16px;border-radius:12px;border:1px solid var(--line-strong);background:rgba(0,0,0,.4);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.84rem;line-height:1.65;outline:none;resize:vertical"></textarea>
+            </div>
+            <div class="row-actions" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:20px">
+              <button class="btn btn-primary" id="luaBtn">Obfuscate</button>
+              <button class="btn btn-ghost" id="luaReset" type="button">Clear</button>
+            </div>
+            <div class="output" id="luaOutput" style="margin-top:22px;display:none">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:12px;flex-wrap:wrap">
+                <span style="font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)">Obfuscated Lua</span>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <button data-copy="lua" style="padding:6px 11px;border-radius:8px;font-size:.72rem;border:1px solid var(--line-strong);color:var(--muted)">Copy</button>
+                  <button data-download-text="lua" style="padding:6px 11px;border-radius:8px;font-size:.72rem;border:1px solid var(--line-strong);color:var(--muted)">Download</button>
+                </div>
+              </div>
+              <pre id="luaOut" style="margin:0;padding:16px 18px;border-radius:12px;border:1px solid var(--line);background:#06060a;color:#cfd0d3;font-family:'JetBrains Mono',monospace;font-size:.78rem;line-height:1.7;overflow:auto;max-height:400px;white-space:pre"></pre>
+              <div style="display:flex;flex-wrap:wrap;gap:18px;margin-top:14px;font-size:.75rem;color:var(--dim)"><span id="luaStats"></span></div>
+            </div>
+          </div>
+
+          <div class="tool-panel" data-panel="py">
+            <div style="margin-bottom:24px">
+              <h3 style="font-size:1.3rem;font-weight:500;letter-spacing:-.02em;background-image:linear-gradient(180deg,#ffffff 0%,#c2c2ca 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">Python Obfuscator</h3>
+              <p style="margin-top:8px;font-size:.9rem;color:var(--muted);max-width:62ch;line-height:1.7">Renames local parameters and loop variables, encodes string literals, and removes comments and blank lines. Indentation is preserved so the file still runs.</p>
+            </div>
+            <div class="drop" data-drop="py" tabindex="0" role="button" style="border:1px dashed rgba(255,255,255,.18);border-radius:14px;padding:24px;text-align:center;cursor:pointer;background:rgba(255,255,255,.012)">
+              <input type="file" id="pyFile" hidden accept=".py,.txt,text/plain">
+              <p style="font-size:.9rem;color:var(--text);margin-bottom:4px">Drop a .py file here or click to browse</p>
+              <p style="font-size:.75rem;color:var(--dim)">Or paste code below</p>
+            </div>
+            <div style="position:relative;margin-top:20px">
+              <textarea id="pyIn" placeholder="# Paste Python source here" spellcheck="false" style="width:100%;min-height:200px;padding:14px 16px;border-radius:12px;border:1px solid var(--line-strong);background:rgba(0,0,0,.4);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.84rem;line-height:1.65;outline:none;resize:vertical"></textarea>
+            </div>
+            <div class="row-actions" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:20px">
+              <button class="btn btn-primary" id="pyBtn">Obfuscate</button>
+              <button class="btn btn-ghost" id="pyReset" type="button">Clear</button>
+            </div>
+            <div class="output" id="pyOutput" style="margin-top:22px;display:none">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:12px;flex-wrap:wrap">
+                <span style="font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)">Obfuscated Python</span>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <button data-copy="py" style="padding:6px 11px;border-radius:8px;font-size:.72rem;border:1px solid var(--line-strong);color:var(--muted)">Copy</button>
+                  <button data-download-text="py" style="padding:6px 11px;border-radius:8px;font-size:.72rem;border:1px solid var(--line-strong);color:var(--muted)">Download</button>
+                </div>
+              </div>
+              <pre id="pyOut" style="margin:0;padding:16px 18px;border-radius:12px;border:1px solid var(--line);background:#06060a;color:#cfd0d3;font-family:'JetBrains Mono',monospace;font-size:.78rem;line-height:1.7;overflow:auto;max-height:400px;white-space:pre"></pre>
+              <div style="display:flex;flex-wrap:wrap;gap:18px;margin-top:14px;font-size:.75rem;color:var(--dim)"><span id="pyStats"></span></div>
+            </div>
+          </div>
+
+          <div class="tool-panel" data-panel="deobf">
+            <div style="margin-bottom:24px">
+              <h3 style="font-size:1.3rem;font-weight:500;letter-spacing:-.02em;background-image:linear-gradient(180deg,#ffffff 0%,#c2c2ca 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">Lua / Python Deobfuscator</h3>
+              <p style="margin-top:8px;font-size:.9rem;color:var(--muted);max-width:62ch;line-height:1.7">Decodes escape sequences, unwraps common base64 strings, and normalizes formatting. Reverses what is reversible. Names destroyed by obfuscation cannot be perfectly recovered.</p>
+            </div>
+            <div class="drop" data-drop="deobf" tabindex="0" role="button" style="border:1px dashed rgba(255,255,255,.18);border-radius:14px;padding:24px;text-align:center;cursor:pointer;background:rgba(255,255,255,.012)">
+              <input type="file" id="deobfFile" hidden accept=".lua,.py,.txt,text/plain">
+              <p style="font-size:.9rem;color:var(--text);margin-bottom:4px">Drop a .lua or .py file here or click to browse</p>
+              <p style="font-size:.75rem;color:var(--dim)">Or paste code below</p>
+            </div>
+            <div id="deobfLang" style="display:flex;gap:6px;margin-top:14px">
+              <button data-lang="auto" class="on" style="padding:6px 12px;border-radius:8px;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text);border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.05)">Auto</button>
+              <button data-lang="lua" style="padding:6px 12px;border-radius:8px;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);border:1px solid var(--line)">Lua</button>
+              <button data-lang="py" style="padding:6px 12px;border-radius:8px;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);border:1px solid var(--line)">Python</button>
+            </div>
+            <div style="position:relative;margin-top:20px">
+              <textarea id="deobfIn" placeholder="Paste Lua or Python source here" spellcheck="false" style="width:100%;min-height:200px;padding:14px 16px;border-radius:12px;border:1px solid var(--line-strong);background:rgba(0,0,0,.4);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.84rem;line-height:1.65;outline:none;resize:vertical"></textarea>
+            </div>
+            <div class="row-actions" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:20px">
+              <button class="btn btn-primary" id="deobfBtn">Deobfuscate</button>
+              <button class="btn btn-ghost" id="deobfReset" type="button">Clear</button>
+            </div>
+            <div class="status" id="deobfStatus"></div>
+            <div class="output" id="deobfOutput" style="margin-top:22px;display:none">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:12px;flex-wrap:wrap">
+                <span style="font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)">Deobfuscated source</span>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <button data-copy="deobf" style="padding:6px 11px;border-radius:8px;font-size:.72rem;border:1px solid var(--line-strong);color:var(--muted)">Copy</button>
+                  <button data-download-text="deobf" style="padding:6px 11px;border-radius:8px;font-size:.72rem;border:1px solid var(--line-strong);color:var(--muted)">Download</button>
+                </div>
+              </div>
+              <pre id="deobfOut" style="margin:0;padding:16px 18px;border-radius:12px;border:1px solid var(--line);background:#06060a;color:#cfd0d3;font-family:'JetBrains Mono',monospace;font-size:.78rem;line-height:1.7;overflow:auto;max-height:400px;white-space:pre"></pre>
+              <div style="display:flex;flex-wrap:wrap;gap:18px;margin-top:14px;font-size:.75rem;color:var(--dim)"><span id="deobfStats"></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="view-status" data-view="status">
+    <div class="inner">
+      <div class="status-wrap">
+        <header class="section-head">
+          <p class="eyebrow warm"><span class="pulse"></span><span class="etext">Application tracking</span></p>
+          <h2 class="section-title grad g-down">Application Status</h2>
+          <p class="lede" style="margin-top:18px">Your application ticket and its latest review status will appear here. Saved tickets stay on this device after refreshing, and you can track a ticket on another device by entering its number.</p>
+          <span class="rule"></span>
+        </header>
+        <form class="status-lookup" id="statusLookupForm">
+          <input type="text" id="statusTicketInput" inputmode="numeric" autocomplete="off" placeholder="Enter ticket number (example: #929319)" aria-label="Application ticket number">
+          <button class="btn btn-primary" type="submit">Track Ticket</button>
+        </form>
+        <div class="status-cards" id="statusCards" aria-live="polite">
+          <div class="status-empty">No saved application tickets yet. Submit an application or enter your ticket number above.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="view-dashboard" data-view="dashboard">
+    <div class="inner">
+
+      <div id="dashLoginWrap">
+        <div class="dash-login">
+          <h3>Administrator Sign-In</h3>
+          <p class="sub">Enter the administrator email and password. Only accounts created in Firebase Console → Authentication → Users can sign in here.</p>
+
+          <form id="dashLoginForm" novalidate>
+            <label class="field">
+              <span class="label">Email</span>
+              <input type="email" id="dashEmail" placeholder="admin@mtrx.local" autocomplete="username">
+            </label>
+
+            <label class="field">
+              <span class="label">Password</span>
+              <div style="position:relative">
+                <input type="password" id="dashPassword" placeholder="Password" autocomplete="current-password" style="padding-right:84px">
+                <button class="input-toggle" data-toggle="dashPassword" type="button" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);padding:6px 10px;border-radius:6px;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)">Show</button>
+              </div>
+            </label>
+
+            <button type="submit" class="btn btn-primary" id="dashLoginBtn">Sign In</button>
+
+            <div class="login-error" id="dashLoginError"></div>
+          </form>
+        </div>
+      </div>
+
+      <div class="dash-shell" id="dashShell">
+        <div class="dash-top">
+          <div>
+            <h2>Dashboard</h2>
+            <div class="who">Signed in as <span id="dashAdminEmail">—</span> · <span id="dashSessionTime"></span></div>
+          </div>
+          <div class="dash-top-actions">
+            <button class="btn btn-ghost btn-sm" id="dashRefresh">Refresh</button>
+            <button class="btn btn-danger btn-sm" id="dashLogout">Logout</button>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card"><span class="stat-n" id="statTotal">0</span><span class="stat-l">Total</span></div>
+          <div class="stat-card pending"><span class="stat-n" id="statPending">0</span><span class="stat-l">Pending</span></div>
+          <div class="stat-card accepted"><span class="stat-n" id="statAccepted">0</span><span class="stat-l">Accepted</span></div>
+          <div class="stat-card rejected"><span class="stat-n" id="statRejected">0</span><span class="stat-l">Declined</span></div>
+        </div>
+
+        <div class="search-wrap">
+          <span class="search-ic">⌕</span>
+          <input type="text" id="dashSearch" placeholder="Search ticket number, username, discord, or telegram ID…">
+        </div>
+
+        <div class="filter-row" id="dashFilters">
+          <button data-filter="all" class="on">All</button>
+          <button data-filter="pending">Pending</button>
+          <button data-filter="accepted">Accepted</button>
+          <button data-filter="rejected">Declined</button>
+        </div>
+
+        <div class="dash-layout">
+          <div>
+            <div class="app-list" id="appList"></div>
+          </div>
+          <div>
+            <div class="detail-pane" id="detailPane">
+              <div class="detail-empty">Select an application from the list to view its full details.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<div class="confirm" id="confirmModal" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="confirm-scrim" data-confirm-cancel></div>
+  <div class="confirm-box">
+    <h4 id="confirmTitle">Delete application?</h4>
+    <p id="confirmBody">This cannot be undone.</p>
+    <div class="confirm-actions">
+      <button class="btn btn-ghost btn-sm" data-confirm-cancel>Cancel</button>
+      <button class="btn btn-danger btn-sm" id="confirmOk">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="success-modal" id="successModal" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="success-scrim" data-success-close></div>
+  <div class="success-box">
+    <div class="success-icon">✓</div>
+    <h4>Application submitted</h4>
+    <p>Please wait for approval and further notice. Thank you.</p>
+    <button class="btn btn-primary btn-sm" id="successOk" type="button">OK</button>
+  </div>
+</div>
+
+<div class="cur" id="cur"></div>
+<div class="cur-dot" id="curDot"></div>
+
+<script>
+/* =====================================================================
+   FIREBASE SETUP — MTRX (mtrx-cee69)
+   ===================================================================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyCymwB4iuyObpZ8bJyPa_5v7cs3lFvJNX0",
+  authDomain: "mtrx-cee69.firebaseapp.com",
+  projectId: "mtrx-cee69",
+  storageBucket: "mtrx-cee69.firebasestorage.app",
+  messagingSenderId: "1046264569805",
+  appId: "1:1046264569805:web:843a2adc65f818b3f62e84",
+  measurementId: "G-GQSFN4M428"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+(function () {
+  'use strict';
+
+  const $ = (s, r) => (r || document).querySelector(s);
+  const $$ = (s, r) => Array.prototype.slice.call((r || document).querySelectorAll(s));
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+  /* FILE HANDLING */
+  const MAX_IMAGE_DIM = 900;
+  const IMAGE_QUALITY = 0.72;
+  const MAX_PDF_BYTES = 320 * 1024;
+  const MAX_IMAGE_BYTES = 220 * 1024;
+
+  function fileToDataUrl(file) {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result);
+      r.onerror = () => reject(r.error);
+      r.readAsDataURL(file);
+    });
+  }
+  function compressImage(file) {
+    return new Promise((resolve) => {
+      if (file.type === 'image/gif') return resolve(null);
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const scale = Math.min(1, MAX_IMAGE_DIM / Math.max(img.width, img.height));
+        const w = Math.max(1, Math.round(img.width * scale));
+        const h = Math.max(1, Math.round(img.height * scale));
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        const cx = c.getContext('2d');
+        cx.fillStyle = '#000'; cx.fillRect(0, 0, w, h);
+        cx.drawImage(img, 0, 0, w, h);
+        c.toBlob((b) => {
+          if (!b) return resolve(null);
+          const r = new FileReader();
+          r.onload = () => resolve({ dataUrl: r.result, size: b.size, type: 'image/jpeg', name: file.name.replace(/\.[^.]+$/, '') + '.jpg' });
+          r.onerror = () => resolve(null);
+          r.readAsDataURL(b);
+        }, 'image/jpeg', IMAGE_QUALITY);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+      img.src = url;
+    });
+  }
+  async function packageFile(file) {
+    if (!file) return null;
+    if (/^image\//.test(file.type)) {
+      const compressed = await compressImage(file);
+      if (compressed) {
+        if (compressed.size > MAX_IMAGE_BYTES) throw new Error('Image is still too large after compression. Please use a smaller image.');
+        return { name: compressed.name || file.name, type: compressed.type, size: compressed.size, data: compressed.dataUrl };
+      }
+      if (file.size > MAX_IMAGE_BYTES) throw new Error('Image is too large. Max ~200 KB. Please crop or shrink it.');
+      return { name: file.name, type: file.type, size: file.size, data: await fileToDataUrl(file) };
+    }
+    if (file.size > MAX_PDF_BYTES) throw new Error('PDF too large. Max ~300 KB. Please compress it first.');
+    return { name: file.name, type: file.type || 'application/octet-stream', size: file.size, data: await fileToDataUrl(file) };
+  }
+  function dataUrlSize(dataUrl) {
+    if (!dataUrl) return 0;
+    const i = dataUrl.indexOf(',');
+    if (i === -1) return 0;
+    return Math.floor(dataUrl.slice(i + 1).length * 0.75);
+  }
+
+  /* NAV / ROUTER */
+  const viewEls = { tools: $('#view-tools'), work: $('#view-work'), studio: $('#view-studio'), contact: $('#view-contact'), status: $('#view-status'), dashboard: $('#view-dashboard') };
+  let current = 'studio';
+  let navToken = 0;
+  let revealObserver = null;
+  const pill = $('#pill');
+  const linksEl = $('#links');
+
+  function movePill() {
+    const active = $('.links button.on');
+    if (!active) { pill.classList.remove('ready'); return; }
+    const lr = linksEl.getBoundingClientRect();
+    const br = active.getBoundingClientRect();
+    pill.style.width = br.width + 'px';
+    pill.style.height = br.height + 'px';
+    pill.style.transform = 'translate(' + (br.left - lr.left + linksEl.scrollLeft) + 'px,' + (br.top - lr.top) + 'px)';
+    pill.classList.add('ready');
+  }
+  function updateNav() {
+    $$('.links button').forEach(b => b.classList.toggle('on', b.dataset.go === current));
+    movePill();
+  }
+  function setupReveals(view) {
+    if (revealObserver) revealObserver.disconnect();
+    const items = $$('.reveal', view).filter(el => !el.classList.contains('in'));
+    if (!items.length) return;
+    const pending = [];
+    let stagger = 0;
+    items.forEach(el => {
+      const r = el.getBoundingClientRect();
+      if (r.top < window.innerHeight * 0.94 && r.bottom > -40) {
+        const d = stagger++ * 65;
+        setTimeout(() => el.classList.add('in'), 90 + d);
+      } else pending.push(el);
+    });
+    if (!pending.length) return;
+    revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); revealObserver.unobserve(e.target); } });
+    }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+    pending.forEach(el => revealObserver.observe(el));
+  }
+  function go(name) {
+    if (!viewEls[name] || name === current) return;
+    const from = viewEls[current], to = viewEls[name];
+    const token = ++navToken;
+    from.classList.remove('active'); from.classList.add('leaving');
+    setTimeout(() => from.classList.remove('leaving'), 520);
+    to.scrollTop = 0;
+    setTimeout(() => {
+      if (token !== navToken) return;
+      to.classList.add('active');
+      setupReveals(to);
+      if (name === 'dashboard') onDashboardOpen();
+      if (name === 'status') loadSavedStatuses();
+    }, 150);
+    current = name;
+    updateNav();
+    try { history.replaceState(null, '', '#' + name); } catch (e) {}
+  }
+  document.addEventListener('click', (e) => {
+    const goEl = e.target.closest('[data-go]');
+    if (goEl) { go(goEl.dataset.go); return; }
+  });
+
+  /* HELPERS */
+  function fmtBytes(n) {
+    if (n === 0) return '0 B';
+    if (n < 1024) return n + ' B';
+    if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+    if (n < 1024 * 1024 * 1024) return (n / (1024 * 1024)).toFixed(2) + ' MB';
+    return (n / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+  }
+  function fmtDate(ts) {
+    if (!ts) return '—';
+    const d = ts instanceof Date ? ts : new Date(ts);
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleString(undefined, { year:'numeric', month:'short', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+  }
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+  }
+  function download(blob, name) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 500);
+  }
+  function copyText(text, btn) {
+    const done = () => {
+      if (!btn) return;
+      const o = btn.textContent;
+      btn.textContent = 'Copied';
+      btn.style.color = '#e8d3b0';
+      setTimeout(() => { btn.textContent = o; btn.style.color = ''; }, 1600);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+    } else fallbackCopy(text, done);
+  }
+  function fallbackCopy(text, done) {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    ta.remove();
+  }
+  function showStatus(el, kind, text) {
+    el.className = 'status show ' + kind;
+    el.textContent = text;
+  }
+  function hideStatus(el) {
+    el.className = 'status';
+    el.textContent = '';
+  }
+
+  /* CODE / PASTE DETECTION */
+  const CODE_PATTERNS = [
+    { re: /#\s*include\s*[<"]/, w: 3 },{ re: /\bint\s+main\s*\(\s*(void|int)?\s*\)/, w: 3 },
+    { re: /\bstd::\w+/, w: 2 },{ re: /\bprintf\s*\(/, w: 2 },{ re: /\bstd::cout\b/, w: 3 },
+    { re: /\busing\s+namespace\s+std\b/, w: 3 },{ re: /\bnullptr\b/, w: 2 },
+    { re: /\busing\s+System\b/, w: 3 },{ re: /\bpublic\s+static\s+void\s+Main\s*\(/, w: 3 },
+    { re: /\bConsole\.WriteLine\s*\(/, w: 3 },{ re: /^\s*def\s+[A-Za-z_]\w*\s*\([^)]*\)\s*:/m, w: 3 },
+    { re: /^\s*class\s+[A-Za-z_]\w*\s*(\([^)]*\))?\s*:/m, w: 3 },
+    { re: /^\s*import\s+[A-Za-z_]\w*(\s*,\s*[A-Za-z_]\w*)*\s*$/m, w: 2 },
+    { re: /^\s*from\s+[A-Za-z_]\w*\s+import\s+/m, w: 2 },{ re: /\bprint\s*\([^)]*\)/, w: 2 },
+    { re: /\bfunction\s+[A-Za-z_$][\w$]*\s*\(/, w: 2 },{ re: /\bconst\s+[A-Za-z_$][\w$]*\s*=/, w: 2 },
+    { re: /\blet\s+[A-Za-z_$][\w$]*\s*=/, w: 2 },{ re: /=>\s*\{?/, w: 2 },{ re: /\bconsole\.log\s*\(/, w: 3 },
+    { re: /\bpublic\s+class\s+[A-Za-z_]\w*/, w: 3 },{ re: /\bpublic\s+static\s+void\s+main\s*\(/, w: 3 },
+    { re: /\bSystem\.out\.println\s*\(/, w: 3 },
+    { re: /<(!DOCTYPE|html|head|body|div|span|script|style|a\s+href|img\s+src)\b/i, w: 3 },
+    { re: /[.#][A-Za-z_-][\w-]*\s*\{[^}]*:[^}]*\}/, w: 2 },{ re: /^\s*[a-z-]+\s*:\s*[^;{]+;\s*$/m, w: 1 },
+    { re: /\bSELECT\s+.+\s+FROM\s+\w+/i, w: 3 },{ re: /\bINSERT\s+INTO\s+\w+/i, w: 3 },
+    { re: /\bCREATE\s+TABLE\s+\w+/i, w: 3 },{ re: /\bUPDATE\s+\w+\s+SET\b/i, w: 3 },
+    { re: /```[\s\S]*```/, w: 3 },{ re: /;[\s]*\n[\s]*[A-Za-z_#]/g, w: 1 }
+  ];
+  function detectCode(text) {
+    if (!text || text.length < 12) return { code: false, score: 0 };
+    let score = 0;
+    for (const p of CODE_PATTERNS) { try { if (text.match(p.re)) score += p.w; } catch (e) {} }
+    const words = text.trim().split(/\s+/).length;
+    const symbols = (text.match(/[{};<>()\[\]=]/g) || []).length;
+    const ratio = symbols / Math.max(1, text.length);
+    if (ratio > 0.08 && words < 40) score += 2;
+    return { code: score >= 4, score: score };
+  }
+
+  /* BACKGROUND CANVAS */
+  const bg = $('#bg');
+  const ctx = bg.getContext('2d');
+  let W = 0, H = 0, DPR = 1;
+  let stars = [], streaks = [];
+  let sprite = null;
+  let nextStreak = 1600;
+  const pointer = { x: -9999, y: -9999, active: false };
+  const par = { x: 0, y: 0, tx: 0, ty: 0 };
+
+  function makeSprite() {
+    const s = document.createElement('canvas');
+    s.width = s.height = 64;
+    const c = s.getContext('2d');
+    const g = c.createRadialGradient(32, 32, 0, 32, 32, 32);
+    g.addColorStop(0, 'rgba(255,255,255,1)');
+    g.addColorStop(0.35, 'rgba(255,255,255,.3)');
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    c.fillStyle = g; c.fillRect(0, 0, 64, 64);
+    sprite = s;
+  }
+  makeSprite();
+  function build() {
+    const starCount = Math.round(Math.min(reduce ? 70 : 170, (W * H) / 14000));
+    stars = [];
+    for (let i = 0; i < starCount; i++) {
+      stars.push({
+        x: Math.random() * W, y: Math.random() * H,
+        r: Math.random() * 1.1 + 0.3, a: Math.random() * 0.4 + 0.14,
+        tw: Math.random() * 1.5 + 0.35, ph: Math.random() * Math.PI * 2,
+        d: Math.random() * 0.8 + 0.12,
+        vx: (Math.random() - 0.5) * 0.04, vy: (Math.random() - 0.5) * 0.04 + 0.01
+      });
+    }
+  }
+  function resize() {
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth; H = window.innerHeight;
+    bg.width = Math.round(W * DPR); bg.height = Math.round(H * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    build();
+  }
+  function spawnStreak() {
+    const beam = Math.random() < 0.35;
+    const ang = (beam ? 10 + Math.random() * 8 : 20 + Math.random() * 14) * Math.PI / 180;
+    const speed = beam ? 14 + Math.random() * 10 : 7 + Math.random() * 5;
+    const fromTop = Math.random() < 0.8;
+    streaks.push({
+      x: fromTop ? Math.random() * W * 1.15 - W * 0.15 : -120,
+      y: fromTop ? -80 : Math.random() * H * 0.5,
+      vx: Math.cos(ang) * speed, vy: Math.sin(ang) * speed,
+      len: beam ? 200 + Math.random() * 200 : 80 + Math.random() * 110,
+      w: beam ? 1 : 1.5, a: beam ? 0.28 : 0.55, ang: ang
+    });
+  }
+  function draw(dt) {
+    ctx.clearRect(0, 0, W, H);
+    par.x += (par.tx - par.x) * 0.05;
+    par.y += (par.ty - par.y) * 0.05;
+    ctx.fillStyle = '#ffffff';
+    for (let i = 0; i < stars.length; i++) {
+      const s = stars[i];
+      s.ph += 0.011 * s.tw * dt;
+      s.x += s.vx * dt; s.y += s.vy * dt;
+      if (s.x < -12) s.x = W + 12; if (s.x > W + 12) s.x = -12;
+      if (s.y < -12) s.y = H + 12; if (s.y > H + 12) s.y = -12;
+      const a = s.a * (0.5 + 0.5 * Math.sin(s.ph));
+      const px = s.x + par.x * s.d * 2.2;
+      const py = s.y + par.y * s.d * 2.2;
+      ctx.globalAlpha = a;
+      ctx.beginPath(); ctx.arc(px, py, s.r, 0, 6.2832); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    if (!reduce) {
+      nextStreak -= dt * 16.6667;
+      if (nextStreak <= 0) { spawnStreak(); nextStreak = 1800 + Math.random() * 4800; }
+    }
+    for (let i = streaks.length - 1; i >= 0; i--) {
+      const s = streaks[i];
+      s.x += s.vx * dt; s.y += s.vy * dt;
+      if (s.x - s.len > W + 120 || s.y - s.len > H + 120) { streaks.splice(i, 1); continue; }
+      const tx = s.x - Math.cos(s.ang) * s.len;
+      const ty = s.y - Math.sin(s.ang) * s.len;
+      const g = ctx.createLinearGradient(s.x, s.y, tx, ty);
+      g.addColorStop(0, 'rgba(255,255,255,' + s.a + ')');
+      g.addColorStop(0.28, 'rgba(255,255,255,' + (s.a * 0.22) + ')');
+      g.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.strokeStyle = g; ctx.lineWidth = s.w; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(tx, ty); ctx.stroke();
+      ctx.globalAlpha = s.a * 0.85;
+      ctx.drawImage(sprite, s.x - 9, s.y - 9, 18, 18);
+      ctx.globalAlpha = 1;
+    }
+    if (pointer.active) {
+      const g = ctx.createRadialGradient(pointer.x, pointer.y, 0, pointer.x, pointer.y, 240);
+      g.addColorStop(0, 'rgba(216,179,132,.05)');
+      g.addColorStop(0.5, 'rgba(216,179,132,.016)');
+      g.addColorStop(1, 'rgba(216,179,132,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(pointer.x - 240, pointer.y - 240, 480, 480);
+    }
+  }
+  let last = performance.now();
+  function frame(now) {
+    const delta = Math.min(52, now - last);
+    last = now;
+    const dt = delta / 16.6667;
+    if (!document.hidden) draw(dt);
+    requestAnimationFrame(frame);
+  }
+  window.addEventListener('mousemove', (e) => {
+    pointer.x = e.clientX; pointer.y = e.clientY; pointer.active = true;
+    par.tx = (e.clientX / window.innerWidth - 0.5) * 22;
+    par.ty = (e.clientY / window.innerHeight - 0.5) * 18;
+  }, { passive: true });
+  window.addEventListener('mouseout', () => { pointer.active = false; });
+  window.addEventListener('touchmove', (e) => {
+    const t = e.touches[0]; if (!t) return;
+    pointer.x = t.clientX; pointer.y = t.clientY; pointer.active = true;
+    par.tx = (t.clientX / window.innerWidth - 0.5) * 18;
+    par.ty = (t.clientY / window.innerHeight - 0.5) * 14;
+  }, { passive: true });
+  window.addEventListener('touchend', () => { pointer.active = false; });
+  window.addEventListener('resize', () => { resize(); movePill(); }, { passive: true });
+
+  /* CURSOR */
+  const cur = $('#cur');
+  const curDot = $('#curDot');
+  if (fine) {
+    document.body.classList.add('cursor-on');
+    let mx = window.innerWidth / 2, my = window.innerHeight / 2;
+    let rx = mx, ry = my;
+    window.addEventListener('mousemove', (e) => {
+      mx = e.clientX; my = e.clientY;
+      curDot.style.transform = 'translate(' + mx + 'px,' + my + 'px)';
+      const hot = e.target.closest('a, button, .drop, .tool-tabs button, .cat, .handles a, .app-item, .upload, .stat-card, .filter-row button');
+      cur.classList.toggle('hot', !!hot);
+    }, { passive: true });
+    (function loop() {
+      rx += (mx - rx) * 0.16;
+      ry += (my - ry) * 0.16;
+      cur.style.transform = 'translate(' + rx + 'px,' + ry + 'px)';
+      requestAnimationFrame(loop);
+    })();
+  }
+
+  /* WORK LIST */
+  const WORK_CATEGORIES = [
+    { n:'01', t:'File encryption & decryption', d:['Encrypt any file with AES-256-GCM. Key derived from your password using PBKDF2-SHA256 with a fresh 16-byte salt, and a new 12-byte IV for every operation.','Output is a single .xev file that stores the salt, iteration count, IV, and original filename. Decryption re-derives the key and validates the GCM tag before writing anything.'], tags:['AES-256-GCM','PBKDF2-SHA256','Web Crypto'] },
+    { n:'02', t:'Lua obfuscation', d:['Renames local variables and function parameters, encodes every string literal as a byte sequence, strips comments, and collapses whitespace.','Identifiers after a dot or colon are left untouched. The result is still valid Lua.'], tags:['Local renaming','String encoding','Comment stripping'] },
+    { n:'03', t:'Python obfuscation', d:['Renames function parameters, for-loop targets, and with-as bindings, encodes string literals as escapes, removes comments and blank lines.','Indentation is preserved because Python requires it.'], tags:['Identifier renaming','String encoding','Comment removal'] },
+    { n:'04', t:'Lua and Python deobfuscation', d:['Decodes Lua decimal escapes and Python \\x, \\u, \\U escapes back into readable strings. Unwraps common base64 payloads. Normalizes indentation.','Cannot recover variable names that were replaced by meaningless identifiers — that information is genuinely gone.'], tags:['Escape decoding','Base64 unwrap','Formatting'] },
+    { n:'05', t:'File analysis', d:['Inspect a file without executing it. Identify type from magic bytes, extract printable strings, view the entropy distribution.','Useful when a file does not want to open, or when the extension disagrees with the content.'], tags:['Magic bytes','Strings','Entropy'] },
+    { n:'06', t:'Hashing', d:['Compute SHA-256, SHA-384, SHA-512, or SHA-1 over an entire file using SubtleCrypto. Hashes stream from the file handle.','For verifying that a download arrived intact.'], tags:['SHA-256','SHA-512','SHA-1'] },
+    { n:'07', t:'Binary inspection', d:['Hex view of any file with byte offsets, ASCII sidebar, and jump-to-offset. Inspect headers and embedded signatures.','The viewer handles large files by reading in windows.'], tags:['Hex view','Offset jump','ASCII'] },
+    { n:'08', t:'Encoding and decoding', d:['Base64, Base64URL, hex, URL encoding, and percent-encoding, all client-side.','For preparing strings for source code, or for reading values out of a URL.'], tags:['Base64','Hex','URL'] },
+    { n:'09', t:'Developer utilities', d:['Timestamp conversion between Unix time, ISO 8601, and local time. UUID generation. Random bytes from the platform CSPRNG.','Small things that should not require opening another tab.'], tags:['Timestamps','UUIDs','Random'] }
+  ];
+  const wl = $('#workList');
+  if (wl) wl.innerHTML = WORK_CATEGORIES.map((c, i) =>
+    '<article class="cat reveal" style="transition-delay:' + (i * 40) + 'ms">' +
+      '<div class="cat-num">' + c.n + '</div>' +
+      '<div><h3 class="cat-title">' + c.t + '</h3>' +
+      c.d.map(p => '<p class="cat-desc">' + p + '</p>').join('') +
+      '<div class="cat-list">' + c.tags.map(t => '<span>' + t + '</span>').join('') + '</div></div></article>'
+  ).join('');
+
+  /* PASSWORD TOGGLES */
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.input-toggle');
+    if (!btn) return;
+    const input = document.getElementById(btn.dataset.toggle);
+    if (!input) return;
+    const isPw = input.type === 'password';
+    input.type = isPw ? 'text' : 'password';
+    btn.textContent = isPw ? 'Hide' : 'Show';
+  });
+
+  /* TOOL TABS */
+  $$('#toolTabs button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      $$('#toolTabs button').forEach(b => {
+        b.classList.toggle('on', b === btn);
+        b.setAttribute('aria-selected', b === btn ? 'true' : 'false');
+        b.style.color = b === btn ? 'var(--text)' : 'var(--muted)';
+        b.style.background = b === btn ? 'rgba(255,255,255,.05)' : '';
+        b.style.borderColor = b === btn ? 'rgba(255,255,255,.1)' : 'transparent';
+      });
+      const tool = btn.dataset.tool;
+      $$('.tool-panel').forEach(p => {
+        p.classList.toggle('active', p.dataset.panel === tool);
+        p.style.display = p.dataset.panel === tool ? 'block' : 'none';
+      });
+    });
+  });
+  $$('#toolTabs button').forEach(b => {
+    const on = b.classList.contains('on');
+    b.style.color = on ? 'var(--text)' : 'var(--muted)';
+    b.style.background = on ? 'rgba(255,255,255,.05)' : '';
+    b.style.borderColor = on ? 'rgba(255,255,255,.1)' : 'transparent';
+  });
+  $$('.tool-panel').forEach(p => p.style.display = p.classList.contains('active') ? 'block' : 'none');
+
+  /* DROP ZONES */
+  function setupDrop(dropEl, inputEl, onFile) {
+    if (!dropEl || !inputEl) return;
+    dropEl.addEventListener('click', () => inputEl.click());
+    dropEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); inputEl.click(); }
+    });
+    ['dragenter', 'dragover'].forEach(ev => {
+      dropEl.addEventListener(ev, (e) => { e.preventDefault(); e.stopPropagation(); dropEl.classList.add('dragging'); });
+    });
+    ['dragleave', 'drop'].forEach(ev => {
+      dropEl.addEventListener(ev, (e) => {
+        e.preventDefault(); e.stopPropagation();
+        if (ev === 'dragleave' && dropEl.contains(e.relatedTarget)) return;
+        dropEl.classList.remove('dragging');
+      });
+    });
+    dropEl.addEventListener('drop', (e) => {
+      const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) onFile(f);
+    });
+    inputEl.addEventListener('change', () => {
+      const f = inputEl.files && inputEl.files[0];
+      if (f) onFile(f);
+    });
+  }
+
+  /* ENCRYPTION */
+  const XEV_MAGIC = 'XEV1';
+  const XEV_VERSION = 1;
+  const XEV_ITERATIONS = 250000;
+  async function deriveKey(password, salt, iterations) {
+    const enc = new TextEncoder();
+    const km = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+    return crypto.subtle.deriveKey({ name:'PBKDF2', salt: salt, iterations: iterations, hash:'SHA-256' },
+      km, { name:'AES-GCM', length:256 }, false, ['encrypt','decrypt']);
+  }
+  function buildXev(nameBytes, salt, iv, iterations, ciphertext) {
+    const headerSize = 4 + 1 + 4 + 2 + 2;
+    const total = headerSize + nameBytes.length + salt.length + iv.length + ciphertext.byteLength;
+    const out = new Uint8Array(total);
+    let o = 0;
+    for (let i = 0; i < 4; i++) out[o++] = XEV_MAGIC.charCodeAt(i);
+    out[o++] = XEV_VERSION;
+    out[o++] = (iterations >>> 24) & 0xff; out[o++] = (iterations >>> 16) & 0xff;
+    out[o++] = (iterations >>> 8) & 0xff; out[o++] = iterations & 0xff;
+    out[o++] = (nameBytes.length >>> 8) & 0xff; out[o++] = nameBytes.length & 0xff;
+    out[o++] = 0; out[o++] = 0;
+    out.set(nameBytes, o); o += nameBytes.length;
+    out.set(salt, o); o += salt.length;
+    out.set(iv, o); o += iv.length;
+    out.set(new Uint8Array(ciphertext), o);
+    return out;
+  }
+  function parseXev(buf) {
+    const u = new Uint8Array(buf);
+    if (u.length < 13) throw new Error('File too small to be a valid .xev');
+    if (u[0] !== 0x58 || u[1] !== 0x45 || u[2] !== 0x56 || u[3] !== 0x31) throw new Error('Not a .xev file (bad magic)');
+    const version = u[4];
+    if (version !== XEV_VERSION) throw new Error('Unsupported .xev version: ' + version);
+    const iterations = (u[5] << 24) | (u[6] << 16) | (u[7] << 8) | u[8];
+    const nameLen = (u[9] << 8) | u[10];
+    let o = 13;
+    if (o + nameLen + 16 + 12 > u.length) throw new Error('Truncated .xev header');
+    const nameBytes = u.slice(o, o + nameLen); o += nameLen;
+    const salt = u.slice(o, o + 16); o += 16;
+    const iv = u.slice(o, o + 12); o += 12;
+    const ciphertext = u.slice(o);
+    if (ciphertext.length < 16) throw new Error('Missing authentication tag');
+    return { version, iterations, nameBytes, salt, iv, ciphertext };
+  }
+  const encFileInput = $('#encFile');
+  const encDrop = $('[data-drop="enc"]');
+  const encMeta = $('#encMeta');
+  const encPass = $('#encPass');
+  const encPass2 = $('#encPass2');
+  const encBtn = $('#encBtn');
+  const encReset = $('#encReset');
+  const encProgress = $('#encProgress');
+  const encBar = $('#encBar');
+  const encPhase = $('#encPhase');
+  const encStatus = $('#encStatus');
+  const encOutput = $('#encOutput');
+  let encSelectedFile = null, encResultBlob = null, encResultName = '';
+  function updateEncBtn() { encBtn.disabled = !(encSelectedFile && encPass.value && encPass.value === encPass2.value); }
+  function resetEncryptor() {
+    encSelectedFile = null; encResultBlob = null; encResultName = '';
+    encFileInput.value = ''; encDrop.classList.remove('loaded');
+    encMeta.style.display = 'none'; encPass.value = ''; encPass2.value = '';
+    encProgress.classList.remove('show'); encBar.style.width = '0%'; encPhase.textContent = 'Idle';
+    encOutput.style.display = 'none'; hideStatus(encStatus); updateEncBtn();
+  }
+  setupDrop(encDrop, encFileInput, (f) => {
+    encSelectedFile = f;
+    encDrop.classList.add('loaded');
+    encMeta.style.display = 'block';
+    $('#encMetaName').textContent = f.name;
+    $('#encMetaSize').textContent = fmtBytes(f.size);
+    $('#encMetaType').textContent = f.type || 'binary';
+    hideStatus(encStatus); encOutput.style.display = 'none'; updateEncBtn();
+  });
+  encPass.addEventListener('input', updateEncBtn);
+  encPass2.addEventListener('input', updateEncBtn);
+  encReset.addEventListener('click', resetEncryptor);
+  function setEncPhase(pct, label) { encProgress.classList.add('show'); encBar.style.width = pct + '%'; encPhase.textContent = label; }
+  encBtn.addEventListener('click', async () => {
+    if (!encSelectedFile) return;
+    if (!encPass.value) { showStatus(encStatus, 'err', 'Enter a password.'); return; }
+    if (encPass.value !== encPass2.value) { showStatus(encStatus, 'err', 'Passwords do not match.'); return; }
+    encBtn.disabled = true; hideStatus(encStatus); encOutput.style.display = 'none';
+    try {
+      setEncPhase(8, 'Reading file…');
+      const buf = await encSelectedFile.arrayBuffer();
+      setEncPhase(28, 'Generating salt and IV…');
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      setEncPhase(45, 'Deriving key (PBKDF2, ' + XEV_ITERATIONS.toLocaleString() + ' iterations)…');
+      const key = await deriveKey(encPass.value, salt, XEV_ITERATIONS);
+      setEncPhase(70, 'Encrypting (AES-256-GCM)…');
+      const ct = await crypto.subtle.encrypt({ name:'AES-GCM', iv: iv }, key, buf);
+      setEncPhase(92, 'Packing .xev container…');
+      const nameBytes = new TextEncoder().encode(encSelectedFile.name);
+      const xev = buildXev(nameBytes, salt, iv, XEV_ITERATIONS, ct);
+      encResultBlob = new Blob([xev], { type:'application/octet-stream' });
+      encResultName = encSelectedFile.name + '.xev';
+      setEncPhase(100, 'Done.');
+      $('#encOutSize').textContent = fmtBytes(xev.length);
+      $('#encOutName').textContent = encResultName;
+      encOutput.style.display = 'block';
+      showStatus(encStatus, 'ok', 'Encrypted with AES-256-GCM. Keep the password — it cannot be recovered.');
+    } catch (err) {
+      setEncPhase(0, 'Failed.');
+      showStatus(encStatus, 'err', 'Encryption failed: ' + (err && err.message ? err.message : 'unknown error'));
+    } finally { encBtn.disabled = false; updateEncBtn(); }
+  });
+  $('[data-download="enc"]').addEventListener('click', () => { if (encResultBlob) download(encResultBlob, encResultName); });
+
+  const decFileInput = $('#decFile');
+  const decDrop = $('[data-drop="dec"]');
+  const decMeta = $('#decMeta');
+  const decPass = $('#decPass');
+  const decBtn = $('#decBtn');
+  const decReset = $('#decReset');
+  const decProgress = $('#decProgress');
+  const decBar = $('#decBar');
+  const decPhase = $('#decPhase');
+  const decStatus = $('#decStatus');
+  const decOutput = $('#decOutput');
+  let decSelectedFile = null, decResultBlob = null, decResultName = '';
+  function updateDecBtn() { decBtn.disabled = !(decSelectedFile && decPass.value); }
+  function resetDecryptor() {
+    decSelectedFile = null; decResultBlob = null; decResultName = '';
+    decFileInput.value = ''; decDrop.classList.remove('loaded');
+    decMeta.style.display = 'none'; decPass.value = '';
+    decProgress.classList.remove('show'); decBar.style.width = '0%'; decPhase.textContent = 'Idle';
+    decOutput.style.display = 'none'; hideStatus(decStatus); updateDecBtn();
+  }
+  setupDrop(decDrop, decFileInput, async (f) => {
+    decSelectedFile = f;
+    decDrop.classList.add('loaded');
+    decMeta.style.display = 'block';
+    $('#decMetaName').textContent = f.name;
+    $('#decMetaSize').textContent = fmtBytes(f.size);
+    $('#decMetaOrig').textContent = '—';
+    hideStatus(decStatus); decOutput.style.display = 'none'; updateDecBtn();
+    try {
+      const head = new Uint8Array(await f.slice(0, 4096).arrayBuffer());
+      if (head.length >= 13 && head[0] === 0x58 && head[1] === 0x45 && head[2] === 0x56 && head[3] === 0x31) {
+        const nameLen = (head[9] << 8) | head[10];
+        if (13 + nameLen <= head.length) {
+          try { $('#decMetaOrig').textContent = new TextDecoder().decode(head.slice(13, 13 + nameLen)); } catch (e) {}
+        }
+      }
+    } catch (e) {}
+  });
+  decPass.addEventListener('input', updateDecBtn);
+  decReset.addEventListener('click', resetDecryptor);
+  function setDecPhase(pct, label) { decProgress.classList.add('show'); decBar.style.width = pct + '%'; decPhase.textContent = label; }
+  decBtn.addEventListener('click', async () => {
+    if (!decSelectedFile) return;
+    decBtn.disabled = true; hideStatus(decStatus); decOutput.style.display = 'none'; decResultBlob = null;
+    try {
+      setDecPhase(8, 'Reading .xev container…');
+      const buf = await decSelectedFile.arrayBuffer();
+      setDecPhase(22, 'Parsing header…');
+      const parsed = parseXev(buf);
+      setDecPhase(42, 'Deriving key (PBKDF2, ' + parsed.iterations.toLocaleString() + ' iterations)…');
+      const key = await deriveKey(decPass.value, parsed.salt, parsed.iterations);
+      setDecPhase(72, 'Verifying and decrypting…');
+      let plainBuf;
+      try { plainBuf = await crypto.subtle.decrypt({ name:'AES-GCM', iv: parsed.iv }, key, parsed.ciphertext); }
+      catch (e) { throw new Error('Wrong password, or the file was modified.'); }
+      setDecPhase(94, 'Restoring original file…');
+      let originalName = 'decrypted.bin';
+      if (parsed.nameBytes.length) { try { originalName = new TextDecoder().decode(parsed.nameBytes); } catch (e) {} }
+      decResultBlob = new Blob([plainBuf], { type:'application/octet-stream' });
+      decResultName = originalName;
+      setDecPhase(100, 'Done.');
+      $('#decOutSize').textContent = fmtBytes(plainBuf.byteLength);
+      $('#decOutName').textContent = originalName;
+      decOutput.style.display = 'block';
+      showStatus(decStatus, 'ok', 'Authentication passed. Original file restored.');
+    } catch (err) {
+      setDecPhase(0, 'Failed.');
+      showStatus(decStatus, 'err', 'Decryption failed: ' + (err && err.message ? err.message : 'unknown error'));
+    } finally { decBtn.disabled = false; updateDecBtn(); }
+  });
+  $('[data-download="dec"]').addEventListener('click', () => { if (decResultBlob) download(decResultBlob, decResultName); });
+
+  /* LUA OBFUSCATOR */
+  const LUA_KEYWORDS = new Set(['and','break','do','else','elseif','end','false','for','function','goto','if','in','local','nil','not','or','repeat','return','then','true','until','while']);
+  function tokenizeLua(src) {
+    const tokens = []; let i = 0;
+    while (i < src.length) {
+      const c = src[i];
+      if (c === ' ' || c === '\t' || c === '\n' || c === '\r') { i++; continue; }
+      if (c === '-' && src[i + 1] === '-') {
+        if (src[i + 2] === '[') {
+          let j = i + 3, eq = 0;
+          while (src[j] === '=') { eq++; j++; }
+          if (src[j] === '[') {
+            const close = ']' + '='.repeat(eq) + ']';
+            const end = src.indexOf(close, j + 1);
+            i = end === -1 ? src.length : end + close.length; continue;
+          }
+        }
+        const nl = src.indexOf('\n', i); i = nl === -1 ? src.length : nl + 1; continue;
+      }
+      if (c === '"' || c === "'") {
+        const q = c; let j = i + 1, raw = '';
+        while (j < src.length) {
+          if (src[j] === '\\') { raw += src[j] + (src[j + 1] || ''); j += 2; continue; }
+          if (src[j] === q) break;
+          raw += src[j]; j++;
+        }
+        tokens.push({ t:'str', v: raw, q: q }); i = j + 1; continue;
+      }
+      if (c === '[' && (src[i + 1] === '[' || src[i + 1] === '=')) {
+        let j = i + 1, eq = 0;
+        while (src[j] === '=') { eq++; j++; }
+        if (src[j] === '[') {
+          const close = ']' + '='.repeat(eq) + ']';
+          const end = src.indexOf(close, j + 1);
+          const content = src.slice(j + 1, end === -1 ? src.length : end);
+          tokens.push({ t:'lstr', v: content, eq: eq });
+          i = end === -1 ? src.length : end + close.length; continue;
+        }
+      }
+      if (/[0-9]/.test(c) || (c === '.' && /[0-9]/.test(src[i + 1] || ''))) {
+        let j = i;
+        while (j < src.length && /[0-9a-fA-FxX.eEpP]/.test(src[j])) {
+          const ch = src[j];
+          if ((ch === 'e' || ch === 'E' || ch === 'p' || ch === 'P') && (src[j + 1] === '+' || src[j + 1] === '-')) { j += 2; continue; }
+          j++;
+        }
+        tokens.push({ t:'num', v: src.slice(i, j) }); i = j; continue;
+      }
+      if (/[A-Za-z_]/.test(c)) {
+        let j = i;
+        while (j < src.length && /[A-Za-z0-9_]/.test(src[j])) j++;
+        tokens.push({ t:'id', v: src.slice(i, j) }); i = j; continue;
+      }
+      const three = src.substr(i, 3);
+      if (three === '...') { tokens.push({ t:'op', v:'...' }); i += 3; continue; }
+      const two = src.substr(i, 2);
+      if (['==','~=','<=','>=','..','::','//','<<','>>'].indexOf(two) !== -1) { tokens.push({ t:'op', v: two }); i += 2; continue; }
+      tokens.push({ t:'op', v: c }); i++;
+    }
+    return tokens;
+  }
+  function luaEncodeString(s) {
+    const bytes = new TextEncoder().encode(s);
+    let out = '"';
+    for (let i = 0; i < bytes.length; i++) out += '\\' + bytes[i];
+    return out + '"';
+  }
+  function unescapeLuaString(raw) {
+    let out = ''; let i = 0;
+    while (i < raw.length) {
+      const c = raw[i];
+      if (c !== '\\') { out += c; i++; continue; }
+      const n = raw[i + 1];
+      if (n === 'n') { out += '\n'; i += 2; continue; }
+      if (n === 't') { out += '\t'; i += 2; continue; }
+      if (n === 'r') { out += '\r'; i += 2; continue; }
+      if (n === 'a') { out += '\x07'; i += 2; continue; }
+      if (n === 'b') { out += '\b'; i += 2; continue; }
+      if (n === 'f') { out += '\f'; i += 2; continue; }
+      if (n === 'v') { out += '\v'; i += 2; continue; }
+      if (n === '\\') { out += '\\'; i += 2; continue; }
+      if (n === '"') { out += '"'; i += 2; continue; }
+      if (n === "'") { out += "'"; i += 2; continue; }
+      if (n === 'x') {
+        const hex = raw.substr(i + 2, 2);
+        if (/^[0-9a-fA-F]{1,2}$/.test(hex)) { out += String.fromCharCode(parseInt(hex, 16)); i += 2 + hex.length; continue; }
+      }
+      if (/[0-9]/.test(n)) {
+        let numStr = ''; let j = i + 1;
+        while (j < raw.length && /[0-9]/.test(raw[j]) && numStr.length < 3) { numStr += raw[j]; j++; }
+        out += String.fromCharCode(parseInt(numStr, 10)); i = j; continue;
+      }
+      out += n || ''; i += 2;
+    }
+    return out;
+  }
+  function obfuscateLua(src) {
+    const tokens = tokenizeLua(src);
+    const locals = new Set();
+    for (let i = 0; i < tokens.length; i++) {
+      const tk = tokens[i];
+      if (tk.t !== 'id' || tk.v !== 'local') continue;
+      let j = i + 1;
+      if (tokens[j] && tokens[j].t === 'id' && tokens[j].v === 'function') {
+        j++;
+        if (tokens[j] && tokens[j].t === 'id' && !LUA_KEYWORDS.has(tokens[j].v)) locals.add(tokens[j].v);
+        continue;
+      }
+      while (j < tokens.length) {
+        const t2 = tokens[j];
+        if (t2.t === 'id' && !LUA_KEYWORDS.has(t2.v)) {
+          locals.add(t2.v); j++;
+          if (tokens[j] && tokens[j].t === 'op' && tokens[j].v === ',') { j++; continue; }
+          break;
+        }
+        break;
+      }
+    }
+    for (let i = 0; i < tokens.length; i++) {
+      if (tokens[i].t !== 'id' || tokens[i].v !== 'function') continue;
+      let j = i + 1;
+      if (tokens[j] && tokens[j].t === 'id') j++;
+      if (!tokens[j] || tokens[j].t !== 'op' || tokens[j].v !== '(') continue;
+      j++;
+      let depth = 1;
+      while (j < tokens.length && depth > 0) {
+        const tk = tokens[j];
+        if (tk.t === 'op' && tk.v === '(') depth++;
+        else if (tk.t === 'op' && tk.v === ')') depth--;
+        else if (tk.t === 'id' && !LUA_KEYWORDS.has(tk.v) && depth === 1) locals.add(tk.v);
+        j++;
+      }
+    }
+    const renameMap = new Map(); const used = new Set(); let counter = 0;
+    for (const name of locals) {
+      if (LUA_KEYWORDS.has(name) || used.has(name)) continue;
+      let newName;
+      do { newName = '_' + counter.toString(36); counter++; } while (used.has(newName));
+      used.add(newName); renameMap.set(name, newName);
+    }
+    let out = '';
+    for (let i = 0; i < tokens.length; i++) {
+      const tk = tokens[i];
+      let text = '';
+      if (tk.t === 'id') {
+        const prev = tokens[i - 1];
+        const isField = prev && prev.t === 'op' && (prev.v === '.' || prev.v === ':');
+        text = (renameMap.has(tk.v) && !isField) ? renameMap.get(tk.v) : tk.v;
+      } else if (tk.t === 'str') text = luaEncodeString(unescapeLuaString(tk.v));
+      else if (tk.t === 'lstr') text = luaEncodeString(tk.v);
+      else text = tk.v;
+      const prevChar = out.slice(-1);
+      const nextChar = text.charAt(0);
+      if (out && /[A-Za-z0-9_]/.test(prevChar) && /[A-Za-z0-9_]/.test(nextChar)) out += ' ';
+      out += text;
+    }
+    return out;
+  }
+
+  /* PYTHON OBFUSCATOR */
+  const PY_KEYWORDS = new Set(['False','None','True','and','as','assert','async','await','break','class','continue','def','del','elif','else','except','finally','for','from','global','if','import','in','is','lambda','nonlocal','not','or','pass','raise','return','try','while','with','yield','print','len','range','str','int','float','list','dict','set','tuple','bool','type','self','cls','super','object','open','isinstance','enumerate','zip','map','filter','__init__','__name__','__main__','__file__','__doc__']);
+  function stripPythonComments(src) {
+    let out = ''; let i = 0;
+    while (i < src.length) {
+      const c = src[i];
+      if ((c === '"' || c === "'") && src[i + 1] === c && src[i + 2] === c) {
+        const q = c.repeat(3); out += q; i += 3;
+        const end = src.indexOf(q, i);
+        if (end === -1) { out += src.slice(i); break; }
+        out += src.slice(i, end + 3); i = end + 3; continue;
+      }
+      if (c === '"' || c === "'") {
+        const q = c; out += c; i++;
+        while (i < src.length) {
+          if (src[i] === '\\') { out += src[i] + (src[i + 1] || ''); i += 2; continue; }
+          if (src[i] === q) { out += src[i]; i++; break; }
+          out += src[i]; i++;
+        }
+        continue;
+      }
+      if (c === '#') { while (i < src.length && src[i] !== '\n') i++; continue; }
+      out += c; i++;
+    }
+    return out;
+  }
+  function pythonEncodeString(s) {
+    let out = '"';
+    for (const ch of s) {
+      const cp = ch.codePointAt(0);
+      if (cp === 0x22) { out += '\\"'; continue; }
+      if (cp === 0x5c) { out += '\\\\'; continue; }
+      if (cp === 0x0a) { out += '\\n'; continue; }
+      if (cp === 0x0d) { out += '\\r'; continue; }
+      if (cp === 0x09) { out += '\\t'; continue; }
+      if (cp < 32 || (cp >= 127 && cp < 256)) out += '\\x' + cp.toString(16).padStart(2, '0');
+      else if (cp < 256) out += ch;
+      else if (cp < 0x10000) out += '\\u' + cp.toString(16).padStart(4, '0');
+      else out += '\\U' + cp.toString(16).padStart(8, '0');
+    }
+    return out + '"';
+  }
+  function unescapePyString(raw) {
+    let out = ''; let i = 0;
+    while (i < raw.length) {
+      const c = raw[i];
+      if (c !== '\\') { out += c; i++; continue; }
+      const n = raw[i + 1];
+      if (n === 'n') { out += '\n'; i += 2; continue; }
+      if (n === 't') { out += '\t'; i += 2; continue; }
+      if (n === 'r') { out += '\r'; i += 2; continue; }
+      if (n === '\\') { out += '\\'; i += 2; continue; }
+      if (n === '"') { out += '"'; i += 2; continue; }
+      if (n === "'") { out += "'"; i += 2; continue; }
+      if (n === '0') { out += '\0'; i += 2; continue; }
+      if (n === 'x') {
+        const hex = raw.substr(i + 2, 2);
+        if (/^[0-9a-fA-F]{2}$/.test(hex)) { out += String.fromCharCode(parseInt(hex, 16)); i += 4; continue; }
+      }
+      if (n === 'u') {
+        const hex = raw.substr(i + 2, 4);
+        if (/^[0-9a-fA-F]{4}$/.test(hex)) { out += String.fromCharCode(parseInt(hex, 16)); i += 6; continue; }
+      }
+      if (n === 'U') {
+        const hex = raw.substr(i + 2, 8);
+        if (/^[0-9a-fA-F]{8}$/.test(hex)) { out += String.fromCodePoint(parseInt(hex, 16)); i += 10; continue; }
+      }
+      out += n || ''; i += 2;
+    }
+    return out;
+  }
+  function replacePythonIdentifiers(src, renameMap) {
+    let out = ''; let i = 0;
+    while (i < src.length) {
+      const c = src[i];
+      if (c === '"' || c === "'") {
+        const triple = src[i + 1] === c && src[i + 2] === c;
+        if (triple) {
+          const q = c.repeat(3);
+          const end = src.indexOf(q, i + 3);
+          if (end === -1) { out += src.slice(i); break; }
+          out += src.slice(i, end + 3); i = end + 3; continue;
+        }
+        out += c; i++;
+        while (i < src.length) {
+          if (src[i] === '\\') { out += src[i] + (src[i + 1] || ''); i += 2; continue; }
+          if (src[i] === c) { out += src[i]; i++; break; }
+          out += src[i]; i++;
+        }
+        continue;
+      }
+      if (c === '#') { while (i < src.length && src[i] !== '\n') { out += src[i]; i++; } continue; }
+      if (/[A-Za-z_]/.test(c)) {
+        let j = i;
+        while (j < src.length && /[A-Za-z0-9_]/.test(src[j])) j++;
+        const word = src.slice(i, j);
+        const prev = src[i - 1];
+        const isAttr = prev === '.';
+        out += (renameMap.has(word) && !isAttr) ? renameMap.get(word) : word;
+        i = j; continue;
+      }
+      out += c; i++;
+    }
+    return out;
+  }
+  function encodePythonStrings(src) {
+    let out = ''; let i = 0;
+    while (i < src.length) {
+      const c = src[i];
+      if ((c === '"' || c === "'") && src[i + 1] === c && src[i + 2] === c) {
+        const q = c.repeat(3);
+        const end = src.indexOf(q, i + 3);
+        if (end === -1) { out += src.slice(i); break; }
+        out += src.slice(i, end + 3); i = end + 3; continue;
+      }
+      if (/[rbfRBF]/.test(c) && (src[i + 1] === '"' || src[i + 1] === "'")) {
+        const q = src[i + 1];
+        out += c + q; let j = i + 2, body = '';
+        while (j < src.length) {
+          if (src[j] === '\\') { body += src[j] + (src[j + 1] || ''); j += 2; continue; }
+          if (src[j] === q) break;
+          body += src[j]; j++;
+        }
+        out += body + q; i = j + 1; continue;
+      }
+      if (c === '"' || c === "'") {
+        const q = c; let j = i + 1, body = '';
+        while (j < src.length) {
+          if (src[j] === '\\') { body += src[j] + (src[j + 1] || ''); j += 2; continue; }
+          if (src[j] === q) break;
+          body += src[j]; j++;
+        }
+        out += pythonEncodeString(unescapePyString(body)); i = j + 1; continue;
+      }
+      out += c; i++;
+    }
+    return out;
+  }
+  function obfuscatePython(src) {
+    let code = stripPythonComments(src);
+    const safeLocals = new Set();
+    let m;
+    const defRe = /\bdef\s+[A-Za-z_][A-Za-z0-9_]*\s*\(([^)]*)\)/g;
+    while ((m = defRe.exec(code))) {
+      const parts = m[1].split(',');
+      for (let arg of parts) {
+        arg = arg.trim(); if (!arg) continue;
+        if (arg.startsWith('*')) arg = arg.replace(/^\*+/, '');
+        arg = arg.split('=')[0].split(':')[0].trim();
+        if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(arg) && !PY_KEYWORDS.has(arg)) safeLocals.add(arg);
+      }
+    }
+    const forRe = /\bfor\s+([A-Za-z_][A-Za-z0-9_]*)\s+in\b/g;
+    while ((m = forRe.exec(code))) { if (!PY_KEYWORDS.has(m[1])) safeLocals.add(m[1]); }
+    const withRe = /\bas\s+([A-Za-z_][A-Za-z0-9_]*)\b/g;
+    while ((m = withRe.exec(code))) { if (!PY_KEYWORDS.has(m[1])) safeLocals.add(m[1]); }
+    const renameMap = new Map(); const used = new Set(); let counter = 0;
+    for (const name of safeLocals) {
+      if (PY_KEYWORDS.has(name)) continue;
+      if (name.startsWith('__') && name.endsWith('__')) continue;
+      if (used.has(name)) continue;
+      let newName;
+      do { newName = '_' + counter.toString(36); counter++; } while (used.has(newName));
+      used.add(newName); renameMap.set(name, newName);
+    }
+    code = replacePythonIdentifiers(code, renameMap);
+    code = encodePythonStrings(code);
+    const lines = code.split('\n').map(l => l.replace(/[ \t]+$/, ''));
+    const filtered = [];
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].trim() === '') { if (filtered.length && i < lines.length - 1) continue; }
+      filtered.push(lines[i]);
+    }
+    return filtered.join('\n').replace(/\n{3,}/g, '\n\n');
+  }
+
+  /* DEOBFUSCATOR */
+  function detectLang(code) {
+    if (/\bdef\s+[A-Za-z_]\w*\s*\(/.test(code) || /\bimport\s+[A-Za-z_]/.test(code) || /\bprint\s*\(/.test(code) || /^\s*class\s+[A-Za-z_]\w*/m.test(code)) return 'py';
+    if (/\blocal\s+[A-Za-z_]/.test(code) || /\bfunction\b/.test(code) || /\bthen\b/.test(code) || /\bend\b/.test(code)) return 'lua';
+    return 'lua';
+  }
+  function decodeLuaEscapes(src) {
+    let out = ''; let i = 0;
+    while (i < src.length) {
+      const c = src[i];
+      if (c === '-' && src[i + 1] === '-') {
+        if (src[i + 2] === '[') {
+          const end = src.indexOf(']]', i + 3);
+          if (end !== -1) { out += src.slice(i, end + 2); i = end + 2; continue; }
+        }
+        const nl = src.indexOf('\n', i); i = nl === -1 ? src.length : nl; continue;
+      }
+      if (c === '"' || c === "'") {
+        const q = c; let j = i + 1, body = '';
+        while (j < src.length) {
+          if (src[j] === '\\') { body += src[j] + (src[j + 1] || ''); j += 2; continue; }
+          if (src[j] === q) break;
+          body += src[j]; j++;
+        }
+        out += '"' + reEscapeLua(unescapeLuaString(body)) + '"'; i = j + 1; continue;
+      }
+      out += c; i++;
+    }
+    return out;
+  }
+  function reEscapeLua(s) {
+    let out = '';
+    for (const ch of s) {
+      const cp = ch.codePointAt(0);
+      if (cp === 0x22) { out += '\\"'; continue; }
+      if (cp === 0x5c) { out += '\\\\'; continue; }
+      if (cp === 0x0a) { out += '\\n'; continue; }
+      if (cp === 0x0d) { out += '\\r'; continue; }
+      if (cp === 0x09) { out += '\\t'; continue; }
+      if (cp < 32 || cp === 127) { out += '\\' + cp; continue; }
+      out += ch;
+    }
+    return out;
+  }
+  function decodePyEscapes(src) {
+    let out = ''; let i = 0;
+    while (i < src.length) {
+      const c = src[i];
+      if (c === '#') { const nl = src.indexOf('\n', i); i = nl === -1 ? src.length : nl; continue; }
+      if (c === '"' || c === "'") {
+        const triple = src[i + 1] === c && src[i + 2] === c;
+        if (triple) { out += src.slice(i, i + 3); i += 3; continue; }
+        const q = c; let j = i + 1, body = '';
+        while (j < src.length) {
+          if (src[j] === '\\') { body += src[j] + (src[j + 1] || ''); j += 2; continue; }
+          if (src[j] === q) break;
+          body += src[j]; j++;
+        }
+        out += q + reEscapePy(unescapePyString(body), q) + q; i = j + 1; continue;
+      }
+      out += c; i++;
+    }
+    return out;
+  }
+  function reEscapePy(s, q) {
+    let out = '';
+    for (const ch of s) {
+      const cp = ch.codePointAt(0);
+      if (ch === q) { out += '\\' + q; continue; }
+      if (ch === '\\') { out += '\\\\'; continue; }
+      if (cp === 0x0a) { out += '\\n'; continue; }
+      if (cp === 0x0d) { out += '\\r'; continue; }
+      if (cp === 0x09) { out += '\\t'; continue; }
+      if (cp < 32 || cp === 127) { out += '\\x' + cp.toString(16).padStart(2, '0'); continue; }
+      out += ch;
+    }
+    return out;
+  }
+  function decodeBase64Strings(src) {
+    return src.replace(/"([A-Za-z0-9+/=]{16,})"/g, (match, b64) => {
+      if (b64.length % 4 !== 0) return match;
+      try {
+        const bin = atob(b64);
+        let printable = 0;
+        for (let i = 0; i < bin.length; i++) {
+          const c = bin.charCodeAt(i);
+          if (c === 9 || c === 10 || c === 13 || (c >= 32 && c < 127)) printable++;
+        }
+        if (printable / bin.length < 0.85) return match;
+        return '"' + bin.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\r/g, '\\r') + '"';
+      } catch (e) { return match; }
+    });
+  }
+  function formatLua(src) {
+    const tokens = tokenizeLua(src);
+    let out = ''; let indent = 0;
+    const indentStr = '  ';
+    const openers = new Set(['then','do','function','repeat']);
+    const closers = new Set(['end','until']);
+    for (let i = 0; i < tokens.length; i++) {
+      const tk = tokens[i];
+      let text = tk.v;
+      if (tk.t === 'str') text = tk.q + tk.v + tk.q;
+      if (tk.t === 'lstr') text = '[[' + tk.v + ']]';
+      const prev = tokens[i - 1];
+      const lower = tk.t === 'id' ? tk.v : '';
+      if (closers.has(lower)) indent = Math.max(0, indent - 1);
+      if (i > 0) {
+        const p = prev.v;
+        const pc = p.charAt(p.length - 1);
+        const nc = text.charAt(0);
+        const needSpace = /[A-Za-z0-9_]/.test(pc) && /[A-Za-z0-9_]/.test(nc) ||
+          (prev.t === 'num' && /[A-Za-z_]/.test(nc)) ||
+          (/[A-Za-z0-9_]/.test(pc) && nc === '-') || (pc === '-' && nc === '-');
+        if (needSpace) out += ' ';
+      }
+      if (lower === 'end' || lower === 'until' || lower === 'else' || lower === 'elseif') {
+        if (out && !out.endsWith('\n')) out += '\n' + indentStr.repeat(indent);
+      }
+      out += text;
+      if (openers.has(lower)) { indent++; if (lower !== 'function') out += '\n' + indentStr.repeat(indent); }
+      else if (closers.has(lower)) out += '\n' + indentStr.repeat(indent);
+      else if (tk.t === 'op' && (tk.v === ';' || tk.v === ',')) {
+        if (tk.v === ';') out += '\n' + indentStr.repeat(indent);
+        else out += ' ';
+      }
+    }
+    return out.trim();
+  }
+  function deobfuscate(src, lang) {
+    let out = src; const notes = [];
+    if (lang === 'lua') {
+      out = decodeLuaEscapes(out); notes.push('Lua escape sequences decoded.');
+      out = decodeBase64Strings(out); out = formatLua(out);
+    } else if (lang === 'py') {
+      out = decodePyEscapes(out); notes.push('Python escape sequences decoded.');
+      out = decodeBase64Strings(out); out = out.split('\n').map(l => l.replace(/\s+$/, '')).join('\n');
+    }
+    return { code: out, notes: notes };
+  }
+
+  /* TOOL WIRING */
+  const luaIn = $('#luaIn');
+  const luaOut = $('#luaOut');
+  const luaOutput = $('#luaOutput');
+  const luaStats = $('#luaStats');
+  setupDrop($('[data-drop="lua"]'), $('#luaFile'), async (f) => {
+    luaIn.value = await f.text();
+    $('[data-drop="lua"]').classList.add('loaded');
+  });
+  $('#luaBtn').addEventListener('click', () => {
+    const src = luaIn.value; if (!src.trim()) return;
+    try {
+      const result = obfuscateLua(src);
+      luaOut.textContent = result;
+      luaOutput.style.display = 'block';
+      luaStats.textContent = src.length + ' → ' + result.length + ' chars';
+    } catch (e) {
+      luaOut.textContent = 'Obfuscation failed: ' + (e && e.message ? e.message : 'unknown error');
+      luaOutput.style.display = 'block';
+    }
+  });
+  $('#luaReset').addEventListener('click', () => {
+    luaIn.value = ''; $('#luaFile').value = '';
+    $('[data-drop="lua"]').classList.remove('loaded');
+    luaOutput.style.display = 'none';
+  });
+  $('[data-copy="lua"]').addEventListener('click', (e) => copyText(luaOut.textContent, e.currentTarget));
+  $('[data-download-text="lua"]').addEventListener('click', () => download(new Blob([luaOut.textContent], { type:'text/plain' }), 'obfuscated.lua'));
+
+  const pyIn = $('#pyIn');
+  const pyOut = $('#pyOut');
+  const pyOutput = $('#pyOutput');
+  const pyStats = $('#pyStats');
+  setupDrop($('[data-drop="py"]'), $('#pyFile'), async (f) => {
+    pyIn.value = await f.text();
+    $('[data-drop="py"]').classList.add('loaded');
+  });
+  $('#pyBtn').addEventListener('click', () => {
+    const src = pyIn.value; if (!src.trim()) return;
+    try {
+      const result = obfuscatePython(src);
+      pyOut.textContent = result;
+      pyOutput.style.display = 'block';
+      pyStats.textContent = src.length + ' → ' + result.length + ' chars';
+    } catch (e) {
+      pyOut.textContent = 'Obfuscation failed: ' + (e && e.message ? e.message : 'unknown error');
+      pyOutput.style.display = 'block';
+    }
+  });
+  $('#pyReset').addEventListener('click', () => {
+    pyIn.value = ''; $('#pyFile').value = '';
+    $('[data-drop="py"]').classList.remove('loaded');
+    pyOutput.style.display = 'none';
+  });
+  $('[data-copy="py"]').addEventListener('click', (e) => copyText(pyOut.textContent, e.currentTarget));
+  $('[data-download-text="py"]').addEventListener('click', () => download(new Blob([pyOut.textContent], { type:'text/plain' }), 'obfuscated.py'));
+
+  const deobfIn = $('#deobfIn');
+  const deobfOut = $('#deobfOut');
+  const deobfOutput = $('#deobfOutput');
+  const deobfStats = $('#deobfStats');
+  const deobfStatus = $('#deobfStatus');
+  let deobfLangChoice = 'auto';
+  setupDrop($('[data-drop="deobf"]'), $('#deobfFile'), async (f) => {
+    deobfIn.value = await f.text();
+    $('[data-drop="deobf"]').classList.add('loaded');
+  });
+  $$('#deobfLang button').forEach(b => {
+    b.addEventListener('click', () => {
+      $$('#deobfLang button').forEach(x => {
+        x.classList.toggle('on', x === b);
+        x.style.color = x === b ? 'var(--text)' : 'var(--dim)';
+        x.style.borderColor = x === b ? 'rgba(255,255,255,.2)' : 'var(--line)';
+        x.style.background = x === b ? 'rgba(255,255,255,.05)' : '';
+      });
+      deobfLangChoice = b.dataset.lang;
+    });
+  });
+  $('#deobfBtn').addEventListener('click', () => {
+    const src = deobfIn.value; if (!src.trim()) return;
+    let lang = deobfLangChoice;
+    if (lang === 'auto') lang = detectLang(src);
+    try {
+      const res = deobfuscate(src, lang);
+      deobfOut.textContent = res.code;
+      deobfOutput.style.display = 'block';
+      deobfStats.textContent = src.length + ' → ' + res.code.length + ' chars · ' + (lang === 'py' ? 'Python' : 'Lua') + ' · ' + res.notes.join(' ');
+      showStatus(deobfStatus, 'info', 'Reversible transforms applied. Identifiers that were replaced with generated names cannot be recovered.');
+    } catch (e) {
+      deobfOut.textContent = 'Deobfuscation failed: ' + (e && e.message ? e.message : 'unknown error');
+      deobfOutput.style.display = 'block';
+      showStatus(deobfStatus, 'err', 'Deobfuscation failed.');
+    }
+  });
+  $('#deobfReset').addEventListener('click', () => {
+    deobfIn.value = ''; $('#deobfFile').value = '';
+    $('[data-drop="deobf"]').classList.remove('loaded');
+    deobfOutput.style.display = 'none'; hideStatus(deobfStatus);
+  });
+  $('[data-copy="deobf"]').addEventListener('click', (e) => copyText(deobfOut.textContent, e.currentTarget));
+  $('[data-download-text="deobf"]').addEventListener('click', () => download(new Blob([deobfOut.textContent], { type:'text/plain' }), 'deobfuscated.txt'));
+
+  /* RECRUITMENT FORM */
+  const uploadedFiles = { fbPic: null, tgNumberFile: null, pictureFile: null };
+
+  function setupAppUpload(fieldName) {
+    const drop = $('[data-upload="' + fieldName + '"]');
+    const input = drop ? drop.querySelector('input[type="file"]') : null;
+    if (!drop || !input) return;
+    setupDrop(drop, input, (file) => {
+      const errEl = $('[data-err="' + fieldName + '"]');
+      const okType = /^image\//.test(file.type) || file.type === 'application/pdf' || /\.(jpe?g|png|webp|gif|pdf)$/i.test(file.name);
+      if (!okType) {
+        if (errEl) { errEl.textContent = 'Only images or PDF allowed.'; errEl.style.display = 'block'; }
+        return;
+      }
+      if (errEl) errEl.style.display = 'none';
+      uploadedFiles[fieldName] = file;
+      drop.classList.add('loaded');
+      const fnameEl = $('[data-filename="' + fieldName + '"]');
+      if (fnameEl) fnameEl.textContent = file.name + ' · ' + fmtBytes(file.size);
+      const thumbEl = $('[data-thumb="' + fieldName + '"]');
+      if (thumbEl) {
+        thumbEl.innerHTML = '';
+        if (/^image\//.test(file.type) && file.type !== 'image/gif') {
+          const img = document.createElement('img');
+          img.src = URL.createObjectURL(file);
+          thumbEl.appendChild(img);
+        }
+      }
+    });
+  }
+  ['fbPic', 'tgNumberFile', 'pictureFile'].forEach(setupAppUpload);
+
+  function validatePhone(v) {
+    const digits = v.replace(/[^\d]/g, '');
+    return digits.length >= 7 && digits.length <= 15;
+  }
+  function validateAge(v) {
+    const n = parseInt(v, 10);
+    return !isNaN(n) && n >= 10 && n <= 99;
+  }
+
+  const appForm = $('#appForm');
+  const appSubmit = $('#appSubmit');
+  const appReset = $('#appReset');
+  const appProgress = $('#appProgress');
+  const appBar = $('#appBar');
+  const appPhase = $('#appPhase');
+  const appStatus = $('#appStatus');
+  const ticketPanel = $('#ticketPanel');
+  const ticketValue = $('#ticketValue');
+
+  /* SUCCESS MODAL */
+  const successModal = $('#successModal');
+  const successOk = $('#successOk');
+  let successShownThisSubmit = false;
+
+  function openSuccessModal() {
+    if (successShownThisSubmit) return;
+    successShownThisSubmit = true;
+    successModal.classList.add('open');
+    successModal.setAttribute('aria-hidden', 'false');
+    setTimeout(() => { try { successOk.focus(); } catch (e) {} }, 180);
+  }
+  function closeSuccessModal() {
+    successModal.classList.remove('open');
+    successModal.setAttribute('aria-hidden', 'true');
+  }
+  successOk.addEventListener('click', closeSuccessModal);
+  successModal.addEventListener('click', (e) => {
+    if (e.target.closest('[data-success-close]')) closeSuccessModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && successModal.classList.contains('open')) closeSuccessModal();
+  });
+
+  function setFieldErr(fieldId, msg) {
+    const el = $('#' + fieldId);
+    if (!el) return;
+    const field = el.closest('.field');
+    if (!field) return;
+    field.classList.add('error');
+    const errEl = field.querySelector('.err-msg');
+    if (errEl) { if (msg) errEl.textContent = msg; errEl.style.display = 'block'; }
+  }
+  function resetAppForm() {
+    appForm.reset();
+    Object.keys(uploadedFiles).forEach(k => uploadedFiles[k] = null);
+    $$('.upload').forEach(u => {
+      u.classList.remove('loaded');
+      const fname = u.querySelector('.upload-file'); if (fname) fname.textContent = '';
+      const thumb = u.querySelector('.upload-thumb'); if (thumb) thumb.innerHTML = '';
+    });
+    $$('.field').forEach(f => f.classList.remove('error'));
+    $$('.err-msg').forEach(e => e.style.display = 'none');
+    appProgress.classList.remove('show'); appBar.style.width = '0%'; appPhase.textContent = 'Idle';
+    hideStatus(appStatus);
+    ticketPanel.classList.remove('show');
+  }
+  appReset.addEventListener('click', resetAppForm);
+
+  function setProgress(pct, label) {
+    appProgress.classList.add('show');
+    appBar.style.width = pct + '%';
+    appPhase.textContent = label;
+  }
+
+  async function generateUniqueTicket() {
+    for (let i = 0; i < 20; i++) {
+      const t = '#' + Math.floor(100000 + Math.random() * 900000);
+      try {
+        const snap = await db.collection('applications').where('ticket', '==', t).limit(1).get();
+        if (snap.empty) return t;
+      } catch (e) { return t; }
+    }
+    return '#' + Date.now().toString().slice(-6);
+  }
+
+  /* PUBLIC APPLICATION STATUS TRACKING */
+  const TRACKED_TICKETS_KEY = 'mtrxTrackedApplicationTickets';
+  const statusCardsEl = $('#statusCards');
+  const statusLookupForm = $('#statusLookupForm');
+  const statusTicketInput = $('#statusTicketInput');
+  const statusSubscriptions = new Map();
+  const statusSnapshots = new Map();
+
+  function ticketDocId(ticket) { return String(ticket || '').replace(/[^0-9]/g, ''); }
+  function readTrackedTickets() {
+    try {
+      const value = JSON.parse(localStorage.getItem(TRACKED_TICKETS_KEY) || '[]');
+      return Array.isArray(value) ? value.filter(t => /^#?\d{6,10}$/.test(String(t))) : [];
+    } catch (e) { return []; }
+  }
+  function saveTrackedTickets(tickets) {
+    try { localStorage.setItem(TRACKED_TICKETS_KEY, JSON.stringify(tickets.slice(-15))); }
+    catch (e) { console.warn('Could not save tracked tickets on this device.', e); }
+  }
+  function rememberTicket(ticket) {
+    const normalized = '#' + ticketDocId(ticket);
+    if (!/^#\d{6,10}$/.test(normalized)) return;
+    const tickets = readTrackedTickets().filter(t => ticketDocId(t) !== ticketDocId(normalized));
+    tickets.push(normalized);
+    saveTrackedTickets(tickets);
+    watchStatusTicket(normalized);
+    renderStatusCards();
+  }
+  function watchStatusTicket(ticket) {
+    const id = ticketDocId(ticket);
+    if (!id || statusSubscriptions.has(id)) return;
+    const unsubscribe = db.collection('applicationStatuses').doc(id).onSnapshot((doc) => {
+      statusSnapshots.set(id, doc.exists ? (doc.data() || {}) : { notFound: true });
+      renderStatusCards();
+    }, (err) => {
+      statusSnapshots.set(id, { error: err && err.message ? err.message : 'Unable to load status.' });
+      renderStatusCards();
+    });
+    statusSubscriptions.set(id, unsubscribe);
+  }
+  function renderStatusCards() {
+    if (!statusCardsEl) return;
+    const tickets = readTrackedTickets();
+    if (!tickets.length) {
+      statusCardsEl.innerHTML = '<div class="status-empty">No saved application tickets yet. Submit an application or enter your ticket number above.</div>';
+      return;
+    }
+    statusCardsEl.innerHTML = tickets.slice().reverse().map(ticket => {
+      const id = ticketDocId(ticket);
+      const data = statusSnapshots.get(id);
+      if (data && data.error) return '<article class="status-card"><div class="status-card-top"><div class="status-card-ticket">' + escapeHtml(ticket) + '</div><span class="pill-status rejected">Unavailable</span></div><p class="status-card-message">' + escapeHtml(data.error) + '</p></article>';
+      if (!data) return '<article class="status-card"><div class="status-card-top"><div class="status-card-ticket">' + escapeHtml(ticket) + '</div><span class="pill-status pending">Checking…</span></div><p class="status-card-message">Looking up this ticket.</p></article>';
+      if (data.notFound) return '<article class="status-card"><div class="status-card-top"><div class="status-card-ticket">' + escapeHtml(ticket) + '</div><span class="pill-status rejected">Not found</span></div><p class="status-card-message">No application status was found for this ticket yet. If it was submitted before status tracking was added, ask an administrator to open the Dashboard once so the old ticket can be synced.</p></article>';
+      const status = ['pending','accepted','rejected'].includes(data.status) ? data.status : 'pending';
+      const label = status === 'rejected' ? 'Declined' : status.charAt(0).toUpperCase() + status.slice(1);
+      let updated = 'Status will update here when reviewed.';
+      if (data.updatedAt && typeof data.updatedAt.toDate === 'function') updated = 'Last updated: ' + data.updatedAt.toDate().toLocaleString();
+      else if (data.updatedAt && data.updatedAt.seconds) updated = 'Last updated: ' + new Date(data.updatedAt.seconds * 1000).toLocaleString();
+      return '<article class="status-card"><div class="status-card-top"><div class="status-card-ticket">' + escapeHtml(data.ticket || ticket) + '</div><span class="pill-status ' + status + '">' + label + '</span></div><p class="status-card-message">' + (status === 'pending' ? 'Your application is waiting for review.' : status === 'accepted' ? 'Your application has been accepted.' : 'Your application has been declined.') + '</p><div class="status-card-meta">' + escapeHtml(updated) + '</div><button class="status-remove" type="button" data-remove-ticket="' + id + '">Remove from this device</button></article>';
+    }).join('');
+  }
+  function loadSavedStatuses() {
+    readTrackedTickets().forEach(watchStatusTicket);
+    renderStatusCards();
+  }
+  if (statusLookupForm) statusLookupForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const value = statusTicketInput.value.trim();
+    const id = ticketDocId(value);
+    if (!/^\d{6,10}$/.test(id)) {
+      statusTicketInput.setCustomValidity('Enter a valid 6–10 digit ticket number.');
+      statusTicketInput.reportValidity();
+      return;
+    }
+    statusTicketInput.setCustomValidity('');
+    rememberTicket('#' + id);
+    statusTicketInput.value = '';
+  });
+  if (statusCardsEl) statusCardsEl.addEventListener('click', (e) => {
+    const button = e.target.closest('[data-remove-ticket]');
+    if (!button) return;
+    const id = button.dataset.removeTicket;
+    saveTrackedTickets(readTrackedTickets().filter(t => ticketDocId(t) !== id));
+    const unsub = statusSubscriptions.get(id);
+    if (unsub) unsub();
+    statusSubscriptions.delete(id); statusSnapshots.delete(id);
+    renderStatusCards();
+  });
+  loadSavedStatuses();
+
+  appForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    successShownThisSubmit = false;
+
+    $$('.field').forEach(f => f.classList.remove('error'));
+    $$('.err-msg').forEach(el => { el.style.display = 'none'; });
+    hideStatus(appStatus);
+    ticketPanel.classList.remove('show');
+
+    let ok = true;
+
+    ['fbPic', 'tgNumberFile'].forEach(k => {
+      if (!uploadedFiles[k]) {
+        const errEl = $('[data-err="' + k + '"]');
+        if (errEl) { errEl.textContent = (k === 'fbPic' ? 'FB Pic' : 'TG Number') + ' is required.'; errEl.style.display = 'block'; }
+        ok = false;
+      }
+    });
+
+    const numVal = $('#appNumber').value.trim();
+    if (!numVal || !validatePhone(numVal)) { setFieldErr('appNumber', 'Enter a valid phone number.'); ok = false; }
+    const tgId = $('#appTgId').value.trim();
+    if (!tgId) { setFieldErr('appTgId', 'TG ID is required.'); ok = false; }
+    if (!$('#appDiscord').value.trim()) { setFieldErr('appDiscord', 'Discord username is required.'); ok = false; }
+    if (!$('#appTgUser').value.trim()) { setFieldErr('appTgUser', 'Telegram username is required.'); ok = false; }
+    if (!validateAge($('#appAge').value)) { setFieldErr('appAge', 'Enter a valid age (10–99).'); ok = false; }
+    if (!$('#appCountry').value.trim()) { setFieldErr('appCountry', 'Country is required.'); ok = false; }
+    if (!$('#appExp').value) { setFieldErr('appExp', 'Select your experience level.'); ok = false; }
+    if (!$('#appCpp').value) { setFieldErr('appCpp', 'Select your C/C++ level.'); ok = false; }
+    if (!$('#appRe').value) { setFieldErr('appRe', 'Select your RE level.'); ok = false; }
+    if (!$('#appLow').value) { setFieldErr('appLow', 'Select your low-level level.'); ok = false; }
+    const why = $('#appWhy').value.trim();
+    if (!why) { setFieldErr('appWhy', 'Please explain why you want to join.'); ok = false; }
+    const msg = $('#appMessage').value.trim();
+    if (!msg) { setFieldErr('appMessage', 'Message is required.'); ok = false; }
+
+    const proseFields = [
+      { id: 'appWhy' }, { id: 'appProjects' }, { id: 'appExtra' }, { id: 'appMessage' }
+    ];
+    let codeDetected = false;
+    for (const f of proseFields) {
+      const el = $('#' + f.id);
+      if (!el) continue;
+      const d = detectCode(el.value);
+      if (d.code) {
+        setFieldErr(f.id, 'Code detected. Please provide your own written response instead.');
+        codeDetected = true;
+      }
+    }
+    if (codeDetected) ok = false;
+
+    if (!ok) {
+      showStatus(appStatus, 'err', 'Please fix the highlighted fields and try again.');
+      const firstErr = $('.field.error, .err-msg[style*="block"]');
+      if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
+    appSubmit.disabled = true;
+    setProgress(6, 'Preparing uploads…');
+
+    try {
+      setProgress(18, 'Processing FB Pic…');
+      let fbPicObj = null, tgNumberObj = null, pictureObj = null;
+      try { fbPicObj = await packageFile(uploadedFiles.fbPic); }
+      catch (e) { throw new Error('FB Pic: ' + e.message); }
+
+      setProgress(38, 'Processing TG Number…');
+      try { tgNumberObj = await packageFile(uploadedFiles.tgNumberFile); }
+      catch (e) { throw new Error('TG Number: ' + e.message); }
+
+      if (uploadedFiles.pictureFile) {
+        setProgress(52, 'Processing extra picture…');
+        try { pictureObj = await packageFile(uploadedFiles.pictureFile); }
+        catch (e) { throw new Error('Picture/File: ' + e.message); }
+      }
+
+      const totalBytes =
+        (fbPicObj ? dataUrlSize(fbPicObj.data) : 0) +
+        (tgNumberObj ? dataUrlSize(tgNumberObj.data) : 0) +
+        (pictureObj ? dataUrlSize(pictureObj.data) : 0);
+      if (totalBytes > 780 * 1024) throw new Error('Uploads are too large together. Please use smaller images.');
+
+      setProgress(68, 'Generating ticket number…');
+      const ticket = await generateUniqueTicket();
+
+      setProgress(84, 'Saving to Firestore…');
+      const statusDocId = ticketDocId(ticket);
+      const applicationRef = db.collection('applications').doc();
+      const statusRef = db.collection('applicationStatuses').doc(statusDocId);
+      const submitBatch = db.batch();
+      submitBatch.set(applicationRef, {
+        ticket: ticket,
+        statusDocId: statusDocId,
+        status: 'pending',
+        created: firebase.firestore.FieldValue.serverTimestamp(),
+        discord: $('#appDiscord').value.trim(),
+        tgUser: $('#appTgUser').value.trim(),
+        age: $('#appAge').value.trim(),
+        country: $('#appCountry').value.trim(),
+        exp: $('#appExp').value,
+        langs: $('#appLangs').value.trim(),
+        areas: $('#appAreas').value.trim(),
+        cpp: $('#appCpp').value,
+        re: $('#appRe').value,
+        low: $('#appLow').value,
+        projects: $('#appProjects').value.trim(),
+        why: why,
+        extra: $('#appExtra').value.trim(),
+        number: numVal,
+        tgId: tgId,
+        fbPic: fbPicObj,
+        tgNumber: tgNumberObj,
+        message: msg,
+        pictureFile: pictureObj,
+        code: ''
+      });
+      submitBatch.set(statusRef, {
+        ticket: ticket,
+        status: 'pending',
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      await submitBatch.commit();
+      rememberTicket(ticket);
+
+      // Firestore write succeeded — now (and only now) show the modal
+      setProgress(100, 'Done.');
+      openSuccessModal();
+
+      const keepTicket = ticket;
+      resetAppForm();
+      ticketValue.textContent = keepTicket;
+      ticketPanel.classList.add('show');
+      showStatus(appStatus, 'ok', 'Application submitted successfully.');
+      appSubmit.disabled = false;
+    } catch (err) {
+      setProgress(0, 'Failed.');
+      showStatus(appStatus, 'err', 'Failed to submit application: ' + (err && err.message ? err.message : 'unknown error'));
+      appSubmit.disabled = false;
+    }
+  });
+
+  /* DASHBOARD */
+  const dashLoginWrap = $('#dashLoginWrap');
+  const dashShell = $('#dashShell');
+  const dashLoginForm = $('#dashLoginForm');
+  const dashLoginBtn = $('#dashLoginBtn');
+  const dashLoginError = $('#dashLoginError');
+  const dashEmail = $('#dashEmail');
+  const dashPassword = $('#dashPassword');
+  const dashAdminEmail = $('#dashAdminEmail');
+  const dashSearch = $('#dashSearch');
+  const dashFilters = $('#dashFilters');
+  const appListEl = $('#appList');
+  const detailPane = $('#detailPane');
+  const dashSessionTime = $('#dashSessionTime');
+
+  let dashFilter = 'all';
+  let dashQuery = '';
+  let selectedAppId = null;
+  let currentApps = [];
+  let unsubApps = null;
+  let isAuthed = false;
+
+  function showLoginError(msg) { dashLoginError.textContent = msg; dashLoginError.classList.add('show'); }
+  function clearLoginError() { dashLoginError.classList.remove('show'); dashLoginError.textContent = ''; }
+
+  function showDashboardAuthed(user) {
+    dashLoginWrap.style.display = 'none';
+    dashShell.classList.add('show');
+    dashAdminEmail.textContent = user.email || 'admin';
+    dashSessionTime.textContent = 'session ' + new Date().toLocaleTimeString();
+    startApplicationsListener();
+  }
+  function showDashboardLogin() {
+    dashLoginWrap.style.display = 'block';
+    dashShell.classList.remove('show');
+    selectedAppId = null;
+    currentApps = [];
+    stopApplicationsListener();
+  }
+
+  dashLoginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    clearLoginError();
+    const email = dashEmail.value.trim();
+    const password = dashPassword.value;
+    if (!email || !password) { showLoginError('Enter both email and password.'); return; }
+    dashLoginBtn.disabled = true;
+    const oldText = dashLoginBtn.textContent;
+    dashLoginBtn.textContent = 'Signing in…';
+    try {
+      await auth.signInWithEmailAndPassword(email, password);
+      dashPassword.value = '';
+    } catch (err) {
+      let msg = 'Sign-in failed.';
+      const code = err && err.code ? err.code : '';
+      if (code === 'auth/user-not-found' || code === 'auth/wrong-password' || code === 'auth/invalid-credential') msg = 'Invalid email or password.';
+      else if (code === 'auth/too-many-requests') msg = 'Too many attempts. Try again later.';
+      else if (code === 'auth/invalid-email') msg = 'That email address is not valid.';
+      else if (code === 'auth/network-request-failed') msg = 'Network error. Check your connection.';
+      else if (err && err.message) msg = err.message;
+      showLoginError(msg);
+    } finally {
+      dashLoginBtn.disabled = false;
+      dashLoginBtn.textContent = oldText;
+    }
+  });
+
+  $('#dashLogout').addEventListener('click', async () => {
+    try { await auth.signOut(); } catch (e) {}
+    showDashboardLogin();
+  });
+
+  auth.onAuthStateChanged((user) => {
+    if (!user) { isAuthed = false; showDashboardLogin(); return; }
+    isAuthed = true;
+    clearLoginError();
+    showDashboardAuthed(user);
+  });
+
+  const legacyStatusSyncs = new Set();
+  async function syncLegacyStatus(app) {
+    if (!isAuthed || !app || !app.id || legacyStatusSyncs.has(app.id)) return;
+    const id = ticketDocId(app.ticket);
+    if (!/^\d{6,10}$/.test(id)) return;
+    legacyStatusSyncs.add(app.id);
+    try {
+      const batch = db.batch();
+      batch.update(db.collection('applications').doc(app.id), { statusDocId: id });
+      batch.set(db.collection('applicationStatuses').doc(id), {
+        ticket: app.ticket,
+        status: ['pending','accepted','rejected'].includes(app.status) ? app.status : 'pending',
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+      await batch.commit();
+    } catch (err) {
+      console.warn('Could not sync legacy application status for ' + app.ticket, err);
+      legacyStatusSyncs.delete(app.id);
+    }
+  }
+
+  function startApplicationsListener() {
+    if (unsubApps) return;
+    if (!isAuthed) return;
+    appListEl.innerHTML = '<div class="empty-state">Loading applications…</div>';
+    unsubApps = db.collection('applications').orderBy('created', 'desc').onSnapshot(
+      (snap) => {
+        currentApps = snap.docs.map((d) => {
+          const data = d.data() || {};
+          let created = data.created;
+          if (created && typeof created.toMillis === 'function') created = created.toMillis();
+          else if (created && created.seconds) created = created.seconds * 1000;
+          return Object.assign({ id: d.id, created: created || 0 }, data);
+        });
+        currentApps.forEach(app => {
+          if (!app.statusDocId && app.ticket) syncLegacyStatus(app);
+        });
+        renderStats(); renderAppList();
+        if (selectedAppId) renderDetail();
+      },
+      (err) => {
+        appListEl.innerHTML = '<div class="empty-state" style="color:#efb1b1">Failed to load: ' + escapeHtml(err.message || 'unknown error') + '</div>';
+      }
+    );
+  }
+  function stopApplicationsListener() { if (unsubApps) { try { unsubApps(); } catch (e) {} unsubApps = null; } }
+
+  function refreshDashboard() {
+    if (!isAuthed) return;
+    renderStats(); renderAppList();
+    if (selectedAppId) renderDetail();
+  }
+  $('#dashRefresh').addEventListener('click', refreshDashboard);
+
+  function renderStats() {
+    const total = currentApps.length;
+    const pending = currentApps.filter(a => a.status === 'pending').length;
+    const accepted = currentApps.filter(a => a.status === 'accepted').length;
+    const rejected = currentApps.filter(a => a.status === 'rejected').length;
+    $('#statTotal').textContent = total;
+    $('#statPending').textContent = pending;
+    $('#statAccepted').textContent = accepted;
+    $('#statRejected').textContent = rejected;
+  }
+
+  function matchQuery(app, q) {
+    if (!q) return true;
+    const lower = q.toLowerCase();
+    const q2 = lower.startsWith('#') ? lower.slice(1) : lower;
+    if (app.ticket && String(app.ticket).toLowerCase().replace('#','').includes(q2)) return true;
+    if (app.discord && String(app.discord).toLowerCase().includes(lower)) return true;
+    if (app.tgUser && String(app.tgUser).toLowerCase().includes(lower)) return true;
+    if (app.tgId && String(app.tgId).toLowerCase().includes(lower)) return true;
+    if (app.number && String(app.number).toLowerCase().includes(lower)) return true;
+    return false;
+  }
+
+  function renderAppList() {
+    let list = currentApps.slice();
+    if (dashFilter !== 'all') list = list.filter(a => a.status === dashFilter);
+    if (dashQuery) list = list.filter(a => matchQuery(a, dashQuery));
+
+    if (!currentApps.length) { appListEl.innerHTML = '<div class="empty-state">No applications yet.</div>'; return; }
+    if (!list.length) {
+      appListEl.innerHTML = '<div class="empty-state">' + (dashQuery ? 'No application found for this ticket number.' : 'No applications match this filter.') + '</div>';
+      return;
+    }
+    appListEl.innerHTML = list.map(a => {
+      const statusClass = a.status || 'pending';
+      const date = a.created ? new Date(a.created).toLocaleDateString() : '—';
+      return '<button class="app-item' + (selectedAppId === a.id ? ' on' : '') + '" data-app-id="' + a.id + '">' +
+        '<div class="row1">' +
+          '<span class="ticket">' + escapeHtml(a.ticket || '—') + '</span>' +
+          '<span class="pill-status ' + statusClass + '">' + (statusClass === 'rejected' ? 'declined' : statusClass) + '</span>' +
+        '</div>' +
+        '<div class="row2">' +
+          '<span>' + escapeHtml(a.discord || a.tgUser || 'unknown') + '</span>' +
+          '<span class="dot">·</span>' +
+          '<span>' + date + '</span>' +
+        '</div>' +
+      '</button>';
+    }).join('');
+
+    $$('.app-item', appListEl).forEach(el => {
+      el.addEventListener('click', () => {
+        selectedAppId = el.dataset.appId;
+        renderAppList();
+        renderDetail();
+      });
+    });
+  }
+
+  dashSearch.addEventListener('input', () => {
+    dashQuery = dashSearch.value.trim();
+    renderAppList();
+  });
+
+  dashFilters.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-filter]');
+    if (!btn) return;
+    dashFilter = btn.dataset.filter;
+    $$('#dashFilters button').forEach(b => b.classList.toggle('on', b === btn));
+    renderAppList();
+  });
+
+  function fileCardFromData(fileObj, label) {
+    if (!fileObj || !fileObj.data) {
+      return '<span class="v blank" style="color:var(--dim);font-style:italic">Not submitted</span>';
+    }
+    const isImg = /^image\//.test(fileObj.type || '') && fileObj.type !== 'image/gif';
+    return '<div class="file-card">' +
+      (isImg ? '<img src="' + fileObj.data + '" alt="' + escapeHtml(label) + '" loading="lazy">' : '') +
+      '<div class="fc-foot">' +
+        '<span>' + escapeHtml(fileObj.name || label) + ' · ' + fmtBytes(fileObj.size || 0) + '</span>' +
+        '<a href="' + fileObj.data + '" download="' + escapeHtml(fileObj.name || label) + '">Download</a>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function renderDetail() {
+    if (!selectedAppId) {
+      detailPane.innerHTML = '<div class="detail-empty">Select an application from the list to view its full details.</div>';
+      return;
+    }
+    const app = currentApps.filter(a => a.id === selectedAppId)[0];
+    if (!app) { detailPane.innerHTML = '<div class="detail-empty">Application not found.</div>'; return; }
+
+    const statusClass = app.status || 'pending';
+    const fbPreview = fileCardFromData(app.fbPic, 'FB Pic');
+    const tgPreview = fileCardFromData(app.tgNumber, 'TG Number');
+    const picPreview = fileCardFromData(app.pictureFile, 'Picture');
+
+    detailPane.innerHTML =
+      '<div class="detail-head">' +
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap">' +
+          '<div>' +
+            '<div class="ticket">' + escapeHtml(app.ticket || '—') + '</div>' +
+            '<div class="meta">' +
+              '<span><b>ID</b> ' + escapeHtml((app.id || '').slice(0,8)) + '…</span>' +
+              '<span><b>Submitted</b> ' + fmtDate(app.created) + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<span class="pill-status ' + statusClass + '">' + (statusClass === 'rejected' ? 'declined' : statusClass) + '</span>' +
+        '</div>' +
+        '<div class="detail-actions">' +
+          '<button class="btn btn-success btn-sm" data-act="accepted">Accept</button>' +
+          '<button class="btn btn-ghost btn-sm" data-act="pending">Pending</button>' +
+          '<button class="btn btn-danger btn-sm" data-act="rejected">Decline</button>' +
+          '<button class="btn btn-danger btn-sm" data-act="delete" style="margin-left:auto">Delete</button>' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="detail-body">' +
+        '<div class="detail-section">' +
+          '<h5>Applicant information</h5>' +
+          '<div class="kv">' +
+            '<div class="k">Discord</div><div class="v">' + escapeHtml(app.discord || '') + '</div>' +
+            '<div class="k">Telegram</div><div class="v">' + escapeHtml(app.tgUser || '') + '</div>' +
+            '<div class="k">Age</div><div class="v">' + escapeHtml(app.age || '') + '</div>' +
+            '<div class="k">Country</div><div class="v">' + escapeHtml(app.country || '') + '</div>' +
+            '<div class="k">Experience</div><div class="v">' + escapeHtml(app.exp || '') + '</div>' +
+            '<div class="k">Languages</div><div class="v">' + escapeHtml(app.langs || '—') + '</div>' +
+            '<div class="k">Areas of interest</div><div class="v">' + escapeHtml(app.areas || '—') + '</div>' +
+            '<div class="k">C / C++</div><div class="v">' + escapeHtml(app.cpp || '') + '</div>' +
+            '<div class="k">Reverse engineering</div><div class="v">' + escapeHtml(app.re || '') + '</div>' +
+            '<div class="k">Low-level</div><div class="v">' + escapeHtml(app.low || '') + '</div>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="detail-section">' +
+          '<h5>Required submissions</h5>' +
+          '<div class="kv">' +
+            '<div class="k">FB Pic</div><div class="v">' + fbPreview + '</div>' +
+            '<div class="k">TG Number</div><div class="v">' + tgPreview + '</div>' +
+            '<div class="k">Number</div><div class="v">' + (app.number ? escapeHtml(app.number) : '<span style="color:var(--dim);font-style:italic">Not submitted</span>') + '</div>' +
+            '<div class="k">TG ID</div><div class="v">' + (app.tgId ? escapeHtml(app.tgId) : '<span style="color:var(--dim);font-style:italic">Not submitted</span>') + '</div>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="detail-section">' +
+          '<h5>Projects / previous work</h5>' +
+          '<div class="msg-box">' + (app.projects ? escapeHtml(app.projects) : '<span style="color:var(--dim);font-style:italic">Not provided</span>') + '</div>' +
+        '</div>' +
+
+        '<div class="detail-section">' +
+          '<h5>Why MTRX</h5>' +
+          '<div class="msg-box">' + escapeHtml(app.why || '') + '</div>' +
+        '</div>' +
+
+        '<div class="detail-section">' +
+          '<h5>Additional information</h5>' +
+          '<div class="msg-box">' + (app.extra ? escapeHtml(app.extra) : '<span style="color:var(--dim);font-style:italic">Not provided</span>') + '</div>' +
+        '</div>' +
+
+        '<div class="detail-section">' +
+          '<h5>Message</h5>' +
+          '<div class="msg-box">' + escapeHtml(app.message || '') + '</div>' +
+        '</div>' +
+
+        '<div class="detail-section">' +
+          '<h5>Additional picture / file</h5>' +
+          (app.pictureFile ? picPreview : '<span style="color:var(--dim);font-style:italic;font-size:.85rem">Not submitted</span>') +
+        '</div>' +
+      '</div>';
+
+    $$('[data-act]', detailPane).forEach(btn => {
+      btn.addEventListener('click', () => {
+        const act = btn.dataset.act;
+        if (act === 'delete') {
+          openConfirm('Delete application ' + (app.ticket || '') + '?', 'This cannot be undone.', async () => {
+            try {
+              const deleteBatch = db.batch();
+              deleteBatch.delete(db.collection('applications').doc(app.id));
+              const statusId = app.statusDocId || ticketDocId(app.ticket);
+              if (statusId) deleteBatch.delete(db.collection('applicationStatuses').doc(statusId));
+              await deleteBatch.commit();
+              selectedAppId = null;
+              renderDetail();
+            } catch (err) { alert('Delete failed: ' + (err && err.message ? err.message : 'unknown error')); }
+          });
+        } else updateAppStatus(app.id, act);
+      });
+    });
+  }
+
+  async function updateAppStatus(appId, status) {
+    try {
+      const app = currentApps.find(item => item.id === appId);
+      if (!app) throw new Error('Application not found.');
+      const statusId = app.statusDocId || ticketDocId(app.ticket);
+      const batch = db.batch();
+      batch.update(db.collection('applications').doc(appId), {
+        status: status,
+        statusDocId: statusId,
+        reviewedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      if (statusId) batch.set(db.collection('applicationStatuses').doc(statusId), {
+        ticket: app.ticket,
+        status: status,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+      await batch.commit();
+    } catch (err) { alert('Failed to update status: ' + (err && err.message ? err.message : 'unknown error')); }
+  }
+
+  function onDashboardOpen() {
+    if (isAuthed) { renderStats(); renderAppList(); }
+  }
+
+  /* CONFIRM MODAL */
+  const confirmModal = $('#confirmModal');
+  const confirmTitle = $('#confirmTitle');
+  const confirmBody = $('#confirmBody');
+  const confirmOk = $('#confirmOk');
+  let confirmAction = null;
+
+  function openConfirm(title, body, onOk) {
+    confirmTitle.textContent = title;
+    confirmBody.textContent = body;
+    confirmAction = onOk;
+    confirmModal.classList.add('open');
+    confirmModal.setAttribute('aria-hidden', 'false');
+  }
+  function closeConfirm() {
+    confirmModal.classList.remove('open');
+    confirmModal.setAttribute('aria-hidden', 'true');
+    confirmAction = null;
+  }
+  confirmModal.addEventListener('click', (e) => { if (e.target.closest('[data-confirm-cancel]')) closeConfirm(); });
+  confirmOk.addEventListener('click', async () => {
+    const act = confirmAction;
+    closeConfirm();
+    if (act) await act();
+  });
+
+  /* INIT */
+  resize();
+  viewEls.studio.classList.add('active');
+  if (location.hash && viewEls[location.hash.slice(1)]) {
+    current = 'studio';
+    setTimeout(() => go(location.hash.slice(1)), 60);
+  } else {
+    updateNav();
+    setupReveals(viewEls.studio);
+  }
+  setTimeout(movePill, 120);
+  window.addEventListener('load', () => movePill());
+  requestAnimationFrame(frame);
+
+})();
+</script>
+
+<!--
+=====================================================================
+SETUP REMINDER
+=====================================================================
+
+Firestore rules (Firestore Database → Rules → Publish):
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /applications/{docId} {
+      allow create: if request.resource.data.ticket is string
+                    && request.resource.data.statusDocId is string;
+      allow read, update, delete: if request.auth != null;
+    }
+    match /applicationStatuses/{ticketId} {
+      // Public can GET one status document when they know the ticket number.
+      // Listing all status documents is blocked; no applicant details are stored here.
+      allow get: if true;
+      allow list: if false;
+      allow create: if request.auth != null || (
+        request.resource.data.keys().hasOnly(['ticket', 'status', 'updatedAt'])
+        && request.resource.data.ticket is string
+        && request.resource.data.status == 'pending'
+      );
+      allow update, delete: if request.auth != null;
+    }
+  }
+}
+=====================================================================
+-->
+</body>
+</html>
